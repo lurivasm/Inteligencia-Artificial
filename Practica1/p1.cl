@@ -121,7 +121,7 @@
 ;;;         ordenados
 ;;;
 (defun order-vectors-cosine-distance (vector lst-of-vectors &optional (confidence-level 0))
-  )
+	)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -144,6 +144,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EJERCICIO 2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; APARTADO 2.1
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; es-raiz
+;;; Devuelve si x es raiz de f (i.e. f(x) = 0) con cierta tolerancia
+;;;
+;;; INPUT : f : funcion a evaluar
+;;;         x : punto en el que evaluamos f
+;;;         tol : tolerancia
+;;; OUTPUT : T si |f(x)| < tol
+;;;          nil en otro caso
+(defun es-raiz (f df x tol)
+  (< (abs (/ (funcall f x) (funcall df x))) tol))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; cambia
+;;; Devuelve x - f(x)/df(x)
+;;;
+;;; INPUT : x : punto en el que evaluamos f y df
+;;;         f : funcion a evaluar
+;;;  		df : derivada de f
+;;; OUTPUT : x - f(x)/df(x)
+;;; Suponemos que ya se ha comprobado que df(x) no es 0
+( defun cambia (x f df)
+   (- x 
+    (/ (funcall f x) (funcall df x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; newton
@@ -157,8 +183,24 @@
 ;;; OUTPUT: estimacion del cero de f o NIL si no converge
 ;;;
 ( defun newton (f df max-iter x0 &optional (tol 0.001))
-  )
+  (cond
+   ((<= max-iter 0) (nil)           ;; Ultima iteracion
+   ((eql t (es-raiz f df x0 tol)) x0) ;; Si es raiz devolvemos x0
+   ((= (funcall df x0) 0.0) nil)   ;; No podemos dividir por 0
+   (t (newton f df (- max-iter 1) (cambia x0 f df) tol)))))
+	
 
+(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3))) 
+        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 3.0)  ;; -> 4.0
+(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 0.6)  ;; -> 1.0
+(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+        #'(lambda (x) (- (* x (- (* x 3) 4)))) 30 -2.5) ;; -> -3.0
+(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+        #'(lambda (x) (- (* x (- (* x 3) 4)))) 10 100.0)  ;; -> NIL
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; APARTADO 2.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; one-root-newton
 ;;; Prueba con distintas semillas iniciales hasta que Newton
@@ -174,27 +216,15 @@
 ;;;          para todas las semillas
 ;;;
 (defun one-root-newton (f df max-iter semillas &optional (tol 0.001))
-  )
+	(let n (newton (f df max-iter (first semillas) tol)) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;mirar
+		(cond
+			((null semillas) nil)
+			((not (null n)) n)
+			(T 
+				(one-root-newton (f df max-iter (rest semillas) tol)))))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; one-root-newton
-;;; Prueba con distintas semillas iniciales hasta que Newton
-;;; converge
-;;;
-;;; INPUT: f: funcion de la que se desea encontrar un cero
-;;;        df: derivada de f
-;;;        max-iter: maximo numero de iteraciones
-;;;        semillas : semillas con las que invocar a Newton
-;;;        tol : tolerancia para convergencia ( parametro opcional )
-;;;
-;;; OUTPUT: el primer cero de f que se encuentre, o NIL si se diverge
-;;;         para todas las semillas
-;;;
-(defun one-root-newton (f df max-iter semillas &optional ( tol 0.001))
-  )
-
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; APARTADO 2.3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; all-roots-newton
 ;;; Prueba con distintas semillas iniciales y devuelve las raices
@@ -209,15 +239,30 @@
 ;;; OUTPUT: las raices que se encuentren para cada semilla o nil
 ;;;          si para esa semilla el metodo no converge
 ;;;
-(defun all-roots-newton (f df tol-abs max-iter semillas &optional ( tol 0.001))
-  )
+(defun all-roots-newton (f df max-iter semillas &optional ( tol 0.001))
+	(cond
+		((null semillas) nil)
+		(T
+			(cons (newton f df max-iter (first semillas) tol)
+				(all-roots-newton d df max-iter (rest semillas) tol)))))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; list-not-nil-roots-newton
+;;; Convierte la salida de all-roots-newton a una lista sin nil
+;;;
+;;; INPUT: f : funcion de la cual son raices
+;;;        df : derivada de f
+;;;        max-iter : nº maximo de iteraciones
+;;;        raices : lista de raices
+;;; OUTPUT: lista de semillas
+(defun list-not-nil-roots-newton
+	(mapcan #'list (all-roots-newton f df max-iter semillas &optional ( tol 0.001))))
+	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EJERCICIO 3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;; APARTADO 3.1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; combine-elt-lst
 ;;; Combina un elemento dado con todos los elementos de una lista
@@ -228,8 +273,16 @@
 ;;; OUTPUT: lista con las combinacion del elemento con cada uno de los
 ;;;         de la lista
 (defun combine-elt-lst (elt lst)
-  )
+	(mapcar #'(lambda(x) (list elt x)) lst))
 
+
+(combine-elt-lst 'a '(1 2 3));;; -> ((A 1) (A 2) (A 3))
+(combine-elt-lst 'a nil)     ;;; -> nil
+(combine-elt-lst nil nil)    ;;; -> nil
+(combine-elt-lst nil '(a b)) ;;; -> ((nil a) (nil b))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; APARTADO 3.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; combine-lst-lst
 ;;; Calcula el producto cartesiano de dos listas
@@ -239,10 +292,42 @@
 ;;;
 ;;; OUTPUT: producto cartesiano de las dos listas
 (defun combine-lst-lst (lst1 lst2)
-  )
+	(mapcan #'(lambda(x) (combine-elt-lst x lst2)) lst1))
 
+
+(combine-lst-lst '(a b c) '(1 2)) ;;; -> ((A 1) (A 2) (B 1) (B 2) (C 1) (C 2))
+(combine-lst-lst nil nil)         ;;; -> nil
+(combine-lst-lst '(a b c) nil)    ;;; -> nil
+(combine-lst-lst nil '(a b c))    ;;; -> nil
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; APARTADO 3.3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; combine-elt-lst-v2
+;;; Combina un elemento dado con todos los elementos de una lista
+;;; pero con cons para quitar nil
+;;;
+;;; INPUT: elem: elemento a combinar
+;;;        lst: lista con la que se quiere combinar el elemento
+;;;
+;;; OUTPUT: lista con las combinacion del elemento con cada uno de los
+;;;         de la lista
+(defun combine-elt-lst-v2 (elt lst)
+  (mapcar #'(lambda(x) (cons elt x)) lst))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; combine-lst-lst-v2
+;;; Calcula el producto cartesiano de dos listas pero con cons
+;;;
+;;; INPUT: lst1: primera lista
+;;;        lst2: segunda lista
+;;;
+;;; OUTPUT: producto cartesiano de las dos listas
+(defun combine-lst-lst-v2 (lst1 lst2)
+	(mapcan #'(lambda(x) (combine-elt-lst-v2 x lst2)) lst1))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
 ;;; combine-list-of-lsts
 ;;; Calcula todas las posibles disposiciones de elementos
 ;;; pertenecientes a N listas de forma que en cada disposicion 
@@ -252,8 +337,23 @@
 ;;;
 ;;; OUTPUT: lista con todas las posibles combinaciones de elementos
 (defun combine-list-of-lsts (lstolsts)
-  )
+  (if (null lstolsts)
+      (list nil)
+    (combine-lst-lst-v2 (first lstolsts)
+                     (combine-list-of-lsts (rest lstolsts)))))
 
+
+(combine-list-of-lsts '((a b c) (+ -) (1 2 3 4)))
+;; --> ((A + 1) (A + 2) (A + 3) (A + 4) (A - 1) (A - 2) (A - 3) (A - 4)
+;; (B + 1) (B + 2) (B + 3) (B + 4) (B - 1) (B - 2) (B - 3) (B - 4)
+;; (C + 1) (C + 2) (C + 3) (C + 4) (C - 1) (C - 2) (C - 3) (C - 4))
+
+(combine-list-of-lsts '(() (+ -) (1 2 3 4)))   ;; -> nil
+(combine-list-of-lsts '((a b c) () (1 2 3 4))) ;; -> nil
+(combine-list-of-lsts '((a b c) (1 2 3 4) ())) ;; -> nil
+(combine-list-of-lsts '((1 2 3 4)))            ;; -> ((1) (2) (3) (4))
+(combine-list-of-lsts '(nil))                  ;; -> nil
+(combine-list-of-lsts nil)                     ;; -> (nil)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
