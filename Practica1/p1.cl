@@ -149,13 +149,12 @@
 ;;; es-raiz
 ;;; Devuelve si x es raiz de f (i.e. f(x) = 0) con cierta tolerancia
 ;;;
-;;; INPUT : f : funcion a evaluar
-;;;         x : punto en el que evaluamos f
+;;; INPUT : x : punto en el que evaluamos f
 ;;;         tol : tolerancia
-;;; OUTPUT : T si |f(x)| < tol
+;;; OUTPUT : T si |x| <= tol
 ;;;          nil en otro caso
-(defun es-raiz (f df x tol)
-  (< (abs (/ (funcall f x) (funcall df x))) tol))
+(defun es-raiz (x tol)
+  (<= (abs x) tol))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -163,13 +162,13 @@
 ;;; Devuelve x - f(x)/df(x)
 ;;;
 ;;; INPUT : x : punto en el que evaluamos f y df
-;;;         f : funcion a evaluar
-;;;  		df : derivada de f
+;;;         f : f(x) ya evaluado
+;;;  	    df : derivada de f df(x) ya evaluado
 ;;; OUTPUT : x - f(x)/df(x)
 ;;; Suponemos que ya se ha comprobado que df(x) no es 0
 ( defun cambia (x f df)
    (- x 
-    (/ (funcall f x) (funcall df x))))
+    (/ f df)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; newton
@@ -183,15 +182,21 @@
 ;;; OUTPUT: estimacion del cero de f o NIL si no converge
 ;;;
 ( defun newton (f df max-iter x0 &optional (tol 0.001))
-  (cond
-   ((<= max-iter 0) (nil)           ;; Ultima iteracion
-   ((eql t (es-raiz f df x0 tol)) x0) ;; Si es raiz devolvemos x0
-   ((= (funcall df x0) 0.0) nil)   ;; No podemos dividir por 0
-   (t (newton f df (- max-iter 1) (cambia x0 f df) tol)))))
+  (let
+      ((fx (funcall f x0))
+       (dfx (funcall df x0)))
+    (cond
+     ((<= max-iter 0) nil)          ;; Ultima iteracion
+     ((= dfx 0.0) nil)              ;; No podemos dividir por 0
+     ((es-raiz (/ fx dfx) tol)      ;; Si es raiz devolvemos x0
+                           x0)  
+     (t (newton f df (- max-iter 1) 
+                            (cambia x0 fx dfx) 
+                                      tol)))))
 	
 
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3))) 
-        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 3.0)  ;; -> 4.0
+        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 3.0) ;; -> 4.0
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
         #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 0.6)  ;; -> 1.0
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
@@ -216,12 +221,12 @@
 ;;;          para todas las semillas
 ;;;
 (defun one-root-newton (f df max-iter semillas &optional (tol 0.001))
-	(let n (newton (f df max-iter (first semillas) tol)) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;mirar
-		(cond
-			((null semillas) nil)
-			((not (null n)) n)
-			(T 
-				(one-root-newton (f df max-iter (rest semillas) tol)))))
+  (cond
+   ((null semillas) nil)  ;; Lista vacia
+   ((let n (newton (f df max-iter (first semillas) tol))
+      (not (null n)) n))
+	(T 
+         (one-root-newton (f df max-iter (rest semillas) tol)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; APARTADO 2.3
