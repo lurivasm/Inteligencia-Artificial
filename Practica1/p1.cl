@@ -109,19 +109,50 @@
 (cosine-distance-mapcar '() '())
 (cosine-distance-mapcar '(0 0) '(0 0))
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; vectores-validos
+;;;;;; Devuelve un lista con los vectores validos según la confianza
+;;;;;; INPUT:  vector : vector de la categoria
+;;;;;;         lista : lista de vectores
+;;;;;;         confianza : Nivel de confianza
+;;;;;; OUTPUT: Vectores cuya semejanza con respecto a la
+;;;;;;         categoria es superior al nivel de confianza 
+;;;;;;
+(defun vectores-validos (vector lista confianza)
+  (let
+      ((cosx (cosine-distance-mapcar vector  (car lista))))
+    
+  (cond
+   ((null (car lista)) '())
+   ((< cosx confianza) 
+          (vectores-validos vector (cdr lista) confianza))
+   (t (cons (car lista) (vectores-validos vector (cdr lista) confianza))))))
+    
+     
+
+                               
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; order-vectors-cosine-distance
 ;;; Devuelve aquellos vectores similares a una categoria
 ;;; INPUT:  vector: vector que representa a una categoria,
 ;;;                 representado como una lista
-;;;         lst-of-vectors vector de vectores
-;;;         confidence-level: Nivel de confianza (parametro opcional)
+;;;         lista vector de vectores
+;;;         confianzal: Nivel de confianza (parametro opcional)
 ;;; OUTPUT: Vectores cuya semejanza con respecto a la
 ;;;         categoria es superior al nivel de confianza ,
 ;;;         ordenados
 ;;;
-(defun order-vectors-cosine-distance (vector lst-of-vectors &optional (confidence-level 0))
-	)
+(defun order-vectors-cosine-distance (vector lista &optional (confianza 0))
+  (cond 
+   ((null lista) nil)
+   ((null vector) nil)
+    (t (sort (copy-list (vectores-validos vector lista confianza))
+        #'(lambda(x y) (< (cosine-distance-mapcar vector x) (cosine-distance-mapcar vector y)))))))                
+	                     
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -186,24 +217,23 @@
       ((fx (funcall f x0))
        (dfx (funcall df x0)))
     (cond
-     ((<= max-iter 0) nil)          ;; Ultima iteracion
+     ((<= max-iter 0) tol)          ;; Ultima iteracion
      ((= dfx 0.0) nil)              ;; No podemos dividir por 0
      ((es-raiz (/ fx dfx) tol)      ;; Si es raiz devolvemos x0
-                           x0)  
+                 (first (list (round X0)))  
      (t (newton f df (- max-iter 1) 
                             (cambia x0 fx dfx) 
                                       tol)))))
 	
 
-(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3))) 
-        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 3.0) ;; -> 4.0
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
-        #'(lambda (x) (- (* x (- (* x 3) 4)))) 20 0.6)  ;; -> 1.0
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 3.0) ;;---> 4.0
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
-        #'(lambda (x) (- (* x (- (* x 3) 4)))) 30 -2.5) ;; -> -3.0
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 0.6) ;;---> 1.0
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
-        #'(lambda (x) (- (* x (- (* x 3) 4)))) 10 100.0)  ;; -> NIL
-
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 30 -2.5) ;;---> -3.0
+(newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+           #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 10 100) ;;---> NIL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; APARTADO 2.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
