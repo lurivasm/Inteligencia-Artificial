@@ -104,10 +104,10 @@
 						(*  (sqrt sx)
 							(sqrt sy))))))))
 
-(cosine-distance-mapcar '(1 2) '(1 2 3))
-(cosine-distance-mapcar nil '(1 2 3))
-(cosine-distance-mapcar '() '())
-(cosine-distance-mapcar '(0 0) '(0 0))
+(cosine-distance-mapcar '(1 2) '(1 2 3)) ;;; --> 0.40238577
+(cosine-distance-mapcar nil '(1 2 3)) ;;; --> 1
+(cosine-distance-mapcar '() '()) ;;; --> 0
+(cosine-distance-mapcar '(0 0) '(0 0)) ;;; --> 0
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -127,13 +127,10 @@
     
   (cond
    ((null (car lista)) nil)
-   ((< cosx confianza) 
+   ((< (- 1 cosx) confianza) 
           (vectores-validos vector (cdr lista) confianza))
    (t (cons (car lista) (vectores-validos vector (cdr lista) confianza))))))
-    
-     
-
-                               
+          
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -156,6 +153,18 @@
 	                     
 
 
+(order-vectors-cosine-distance '(1 2 3) '((32 454 123) (133 12 1) (4 2 2)) 0.5) ;; ---> ((4 2 2) (32 454 123))
+
+(order-vectors-cosine-distance '(1 2 3) '((32 454 123) (133 12 1) (4 2 2)) 0.3) ;; ---> ((4 2 2) (32 454 123) (133 12 1))
+
+(order-vectors-cosine-distance '(1 2 3) '((32 454 123) (133 12 1) (4 2 2)) 0.99) ;; ---> NIL
+
+
+
+
+(order-vectors-cosine-distance '(1 2 3) '()) ;;; --> NIL
+
+(order-vectors-cosine-distance '() '((4 3 2) (1 2 3))) ;;; --> NIL
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;						 
 ;;; APARTADO 1.3
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -165,7 +174,7 @@
 ;;; INPUT : categorias: vector de vectores, representado como
 ;;;                     una lista de listas
 ;;;         texto:      vector a comparar
-;;;         funcio-distancia: funcion de distancia
+;;;         funcion-distancia: funcion de distancia
 ;;; OUTPUT: Pares formados por el vector que identifica la categoria
 ;;;         de menor distancia , junto con el valor de dicha distancia
 ;;;
@@ -198,8 +207,25 @@
 		(cond
 			((null cat) nil)
 			(t (cons 
-					(append (car cat) (funcall funcion-distancia (cdr cat) (cdr (car textos)))) 
+					(list (car cat) (funcall funcion-distancia (cdr cat) (cdr (car textos)))) 
 					(get-vectors-category categorias (cdr textos) funcion-distancia))))))
+
+
+(get-vectors-category '((1 43 23 12) (2 33 54 24)) '((1 3 22 134) (2 43 26 58)) #'cosine-distance-rec) ;;; --> ((2 0.5101813) (1 0.18444914))
+(get-vectors-category '((1 43 23 12) (2 33 54 24)) '((1 3 22 134) (2 43 26 58)) #'cosine-distance-mapcar) ;;; --> ((2 0.5101813) (1 0.18444914))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; APARTADO 1.4
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(get-vectors-category '(()) '(()) #'cosine-distance-rec) ;;; --> NIL
+(get-vectors-category '(()) '(()) #'cosine-distance-mapcar) ;;; --> NIL
+(get-vectors-category '((1 4 2) (2 1 2)) '((1 1 2 3)) #'cosine-distance-rec) ;;; --> ((2 0.40238577))
+(get-vectors-category '((1 4 2) (2 1 2)) '((1 1 2 3)) #'cosine-distance-mapcar) ;;; --> ((2 0.40238577))
+(get-vectors-category '(()) '((1 1 2 3) (2 4 5 6)) #'cosine-distance-rec) ;;; --> NIL
+(get-vectors-category '(()) '((1 1 2 3) (2 4 5 6)) #'cosine-distance-mapcar) ;;; --> NIL
+
 
 
 
@@ -248,8 +274,8 @@
       ((fx (funcall f x0))
        (dfx (funcall df x0)))
     (cond
-     ((<= max-iter 0) tol)          ;; Ultima iteracion
-     ((= dfx 0.0) nil)              ;; No podemos dividir por 0
+     ((<= max-iter 0) '(nil))          ;; Ultima iteracion
+     ((= dfx 0.0) '(nil))              ;; No podemos dividir por 0
      ((es-raiz (/ fx dfx) tol)      ;; Si es raiz devolvemos x0
 						X0)  
      (t (newton f df (- max-iter 1) 
@@ -259,12 +285,16 @@
 
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
 #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 3.0) ;;---> 4.0
+
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
 #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 0.6) ;;---> 1.0
+
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
 #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 30 -2.5) ;;---> -3.0
+
 (newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
            #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 10 100) ;;---> NIL
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; APARTADO 2.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -284,10 +314,19 @@
 (defun one-root-newton (f df max-iter semillas &optional (tol 0.001))
   (cond
    ((null semillas) nil)  ;; Lista vacia
-   ((let n (newton (f df max-iter (first semillas) tol))
+   ((let ((n (newton f df max-iter (first semillas) tol)))
       (not (null n)) n))
 	(T 
-         (one-root-newton (f df max-iter (rest semillas) tol)))))
+         (one-root-newton f df max-iter (rest semillas) tol))))
+
+(one-root-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 -2.5)) ;; -->1.0
+
+(one-root-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(3.0 -2.5)) ;; --> 4.0
+
+(one-root-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 1 '(3.0 -2.5)) ;;---> NIL
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; APARTADO 2.3
@@ -310,7 +349,7 @@
 		((null semillas) nil)
 		(T
 			(cons (newton f df max-iter (first semillas) tol)
-				(all-roots-newton d df max-iter (rest semillas) tol)))))
+				(all-roots-newton f df max-iter (rest semillas) tol)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; list-not-nil-roots-newton
@@ -323,6 +362,17 @@
 ;;; OUTPUT: lista de semillas
 (defun list-not-nil-roots-newton
 	(mapcan #'list (all-roots-newton f df max-iter semillas &optional ( tol 0.001))))
+
+
+(all-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 -2.5)) ;;---> (1.0 4.0 -3.0)
+
+(all-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 10000.0)) ;;---> (1.0 4.0 nil)
+
+(all-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 1 '(0.6 3.0 -2.5)) ;;---> (nil nil nil)
+
 	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -422,88 +472,3 @@
 (combine-list-of-lsts nil)                     ;; -> (nil)
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EJERCICIO 4
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; defino operadores logicos
-(defconstant +bicond+ '<=>)
-(defconstant +cond+   '=>)
-(defconstant +and+    '^)
-(defconstant +or+     'v)
-(defconstant +not+    '!)
-
-;; definiciones de valores de verdad, conectores y atomos
-(defun truth-value-p (x)
-  (or (eql x T) (eql x NIL)))
-
-(defun unary-connector-p (x)
-  (eql x +not+))
-
-(defun binary-connector-p (x)
-  (or (eql x +bicond+)
-      (eql x +cond+)))
-
-(defun n-ary-connector-p (x)
-  (or (eql x +and+)
-      (eql x +or+)))
-
-(defun bicond-connector-p (x)
-  (eql x +bicond+))
-
-(defun cond-connector-p (x)
-    (eql x +cond+))
-
-(defun connector-p (x)
-  (or (unary-connector-p  x)
-      (binary-connector-p x)
-      (n-ary-connector-p  x)))
-
-(defun positive-literal-p (x)
-  (and (atom x)
-       (not (truth-value-p x))
-       (not (connector-p x))))
-
-(defun negative-literal-p (x)
-  (and (listp x)
-       (eql +not+ (first x))
-       (null (rest (rest x)))
-       (positive-literal-p (second x))))
-
-(defun literal-p (x)
-  (or (positive-literal-p x)
-      (negative-literal-p x)))
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; truth-tree
-;;; Recibe una expresion y construye su arbol de verdad para 
-;;; determinar si es SAT o UNSAT
-;;;
-;;; INPUT  : fbf - Formula bien formada (FBF) a analizar.
-;;; OUTPUT : T   - FBF es SAT
-;;;          N   - FBF es UNSAT
-;;;
-(defun truth-tree (fbf)
-  )
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; EJERCICIO 5
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; shortest-path-improved
-;;; Version de busqueda en anchura que no entra en recursion
-;;; infinita cuando el grafo tiene ciclos
-;;; INPUT:   end: nodo final
-;;;          queue: cola de nodos por explorar
-;;;          net: grafo
-;;; OUTPUT: camino mas corto entre dos nodos
-;;;         nil si no lo encuentra
-
-(defun bfs-improved (end queue net)
-  )
-
-(defun shortest-path-improved (end queue net)
-  )
