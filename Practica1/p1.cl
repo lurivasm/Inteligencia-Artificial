@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EJERCICIO 1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
+;;; APARADO 1.1
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; producto-escalar (x y)
 ;;; Calcula el producto escalar de dos vectores recursivamente
@@ -110,7 +110,8 @@
 (cosine-distance-mapcar '(0 0) '(0 0))
 
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;; APARTADO 1.2
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;; vectores-validos
 ;;;;;; Devuelve un lista con los vectores validos según la confianza
@@ -125,7 +126,7 @@
       ((cosx (cosine-distance-mapcar vector  (car lista))))
     
   (cond
-   ((null (car lista)) '())
+   ((null (car lista)) nil)
    ((< cosx confianza) 
           (vectores-validos vector (cdr lista) confianza))
    (t (cons (car lista) (vectores-validos vector (cdr lista) confianza))))))
@@ -155,6 +156,30 @@
 	                     
 
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;						 
+;;; APARTADO 1.3
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; ordenar-categorias (categorias texto funcion-distancia)
+;;; Ordena las categorias segun su semejanza al vector .
+;;;
+;;; INPUT : categorias: vector de vectores, representado como
+;;;                     una lista de listas
+;;;         texto:      vector a comparar
+;;;         funcio-distancia: funcion de distancia
+;;; OUTPUT: Pares formados por el vector que identifica la categoria
+;;;         de menor distancia , junto con el valor de dicha distancia
+;;;
+( defun ordenar-categorias (categorias texto funcion-distancia)
+		(cond 
+			((null categorias) nil)
+			((null texto) nil)
+			(t 
+				(sort (copy-list categorias)
+					#'(lambda(x y) (< (funcall funcion-distancia (cdr texto) (cdr x)) (funcall funcion-distancia (cdr texto) (cdr y))))))))     
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; get-vectors-category (categories vectors distance-measure)
 ;;; Clasifica a los textos en categorias .
@@ -167,8 +192,14 @@
 ;;; OUTPUT: Pares formados por el vector que identifica la categoria
 ;;;         de menor distancia , junto con el valor de dicha distancia
 ;;;
-( defun get-vectors-category (categories texts distance-measure)
-  )
+( defun get-vectors-category (categorias textos funcion-distancia)
+		(let 
+			((cat (car (ordenar-categorias categorias (car textos) funcion-distancia))))
+		(cond
+			((null cat) nil)
+			(t (cons 
+					(append (car cat) (funcall funcion-distancia (cdr cat) (cdr (car textos)))) 
+					(get-vectors-category categorias (cdr textos) funcion-distancia))))))
 
 
 
@@ -220,7 +251,7 @@
      ((<= max-iter 0) tol)          ;; Ultima iteracion
      ((= dfx 0.0) nil)              ;; No podemos dividir por 0
      ((es-raiz (/ fx dfx) tol)      ;; Si es raiz devolvemos x0
-                 (first (list (round X0)))  
+						X0)  
      (t (newton f df (- max-iter 1) 
                             (cambia x0 fx dfx) 
                                       tol)))))
