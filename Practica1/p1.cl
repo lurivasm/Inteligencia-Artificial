@@ -274,8 +274,8 @@
       ((fx (funcall f x0))
        (dfx (funcall df x0)))
     (cond
-     ((<= max-iter 0) '(nil))          ;; Ultima iteracion
-     ((= dfx 0.0) '(nil))              ;; No podemos dividir por 0
+     ((<= max-iter 0) nil)          ;; Ultima iteracion
+     ((= dfx 0.0) nil)              ;; No podemos dividir por 0
      ((es-raiz (/ fx dfx) tol)      ;; Si es raiz devolvemos x0
 						X0)  
      (t (newton f df (- max-iter 1) 
@@ -351,19 +351,6 @@
 			(cons (newton f df max-iter (first semillas) tol)
 				(all-roots-newton f df max-iter (rest semillas) tol)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; list-not-nil-roots-newton
-;;; Convierte la salida de all-roots-newton a una lista sin nil
-;;;
-;;; INPUT: f : funcion de la cual son raices
-;;;        df : derivada de f
-;;;        max-iter : nº maximo de iteraciones
-;;;        raices : lista de raices
-;;; OUTPUT: lista de semillas
-(defun list-not-nil-roots-newton
-	(mapcan #'list (all-roots-newton f df max-iter semillas &optional ( tol 0.001))))
-
-
 (all-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
 #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 -2.5)) ;;---> (1.0 4.0 -3.0)
 
@@ -373,7 +360,28 @@
 (all-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
 #'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 1 '(0.6 3.0 -2.5)) ;;---> (nil nil nil)
 
-	
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; list-not-nil-roots-newton
+;;; Convierte la salida de all-roots-newton a una lista sin nil
+;;;
+;;; INPUT: f : funcion de la cual son raices
+;;;        df : derivada de f
+;;;        max-iter : nº maximo de iteraciones
+;;;        raices : lista de raices
+;;; OUTPUT: lista de semillas
+(defun list-not-nil-roots-newton (f df max-iter semillas &optional ( tol 0.001))
+	(mapcan #'(lambda (x) (unless (null x) (list x))) 
+					(all-roots-newton f df max-iter semillas tol)))
+
+(list-not-nil-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 -2.5)) ;;---> (1.0 4.0 -3.0)
+
+(list-not-nil-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 20 '(0.6 3.0 10000.0)) ;;---> (1.0 4.0 nil)
+
+(list-not-nil-roots-newton #'(lambda(x) (* (- x 4) (- x 1) (+ x 3)))
+#'(lambda (x) (- (* x (- (* x 3) 4)) 11)) 1 '(0.6 3.0 -2.5)) ;;---> (nil nil nil)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EJERCICIO 3
