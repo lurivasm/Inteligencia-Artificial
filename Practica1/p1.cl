@@ -535,6 +535,109 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;cambio-implicacion
+;;; Transforma una implicación A => B en !A v B
+;;;	INPUT : Expresión
+;;;	OUTPUT : Expresión transformada
+;;;
+(defun cambio-implicacion (expr)
+	(list 'v (list '! (second expr)) (third expr)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;cambio-doble-implicacion
+;;; Transforma una doble implicación A <=> B en (!A v B) ^ (!B v A)
+;;;	INPUT : Expresión
+;;;	OUTPUT : Expresión transformada
+;;;
+(defun cambio-doble-implicacion (expr)
+	(list '^ (cambio-implicacion expr) (cambio-implicacion (list (first expr) ( third expr) (second expr)))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; construye-lista-negada
+;;; Transforma de forma recursiva una expresion de n elementos en una lista 
+;;; de estos n elementos negados
+;;; INPUT : Expresión
+;;;	OUTPUT : Expresión transformada
+;;;
+(defun construye-lista-negada (expr)
+	(cond
+		((eql expr '()) '())
+		(t 
+			(cons (list '! (first expr)) (construye-lista-negada (rest expr))))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;cambio-negacion
+;;; Simplifica las expresiones con negaciones
+;;;	INPUT : Expresión
+;;;	OUTPUT : Expresión transformada
+;;;
+(defun cambio-negacion (expr)
+	(cond 
+		((eql '! (first (second expr))) (second (second expr)))  			;;; En el caso de una doble negación,
+																		;;; devolvemos la expresión sin negaciones
+
+		((eql '^ (first (second expr))) 								;;; En el caso de una negación de un and,
+			(cons 'v (construye-lista-negada (rest (second expr)))))    ;;; devolvemos un or de la lista negada
+
+		((eql 'v (first (second expr))) 								;;; En el caso de una negación de un or,
+			(cons '^ (construye-lista-negada (rest (second expr)))))    ;;; devolvemos un and de la lista negada
+
+		((eql '=> (first (second expr))) 								;;;En el caso de una negación antes de una implicación,
+			(cambio-negacion 											;;; simplificamos la expresión y llamamos de nuevo a la función
+				(list '! (cambio-implicacion (second expr)))))				
+																						
+		((eql '<=> (first (second expr)))                              	;;;En el caso de una negación antes de una implicación																		
+			(cambio-negacion 										   	;;; simplificamos la expresión y llamamos de nuevo a la función
+				(list '! (cambio-doble-implicacion (second expr)))))		
+
+		(t NIL)))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; transforma
+;;; Simplifica una fbf 
+;;; INPUT : fbf
+;;; OUTPUT : fbf simplificada
+;;;
+(defun transforma (fbf)
+	(cond
+		((literal-p fbf) fbf)									;;; Si la expresion es un literal,lo devuelve
+		((unary-connector-p (first fbf)) 
+				(transforma (cambio-negacion fbf)))				;;; Si es una expr. con un not o algun concdicional, simplifica y llama a la funcion
+		((bicond-connector-p (first fbf)) 
+				(transforma (cambio-doble-implicacion fbf)))
+		((cond-connector-p (first fbf)) 
+				(transforma (cambio-implicacion fbf)))
+		(t (cons (first fbf) 										;;; Si es cualquier otra cosa,llama a la funcion sobre el resto de la expresión
+				(mapcar (lambda (x) (transforma x)) (rest fbf))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; expand-truth-tree-aux
+;;; Desarrolla el arbol de verdad de una fbf
+;;; INPUT : fbf
+;;; OUTPUT : arbol como lista de listas que representan sus ramas
+;;;
+(defun expand-truth-tree-aux (arbol fbf)
+	(cond
+		((null fbf) arbol)
+		((literal-p fbf) (expand-truth-tree-aux (cons fbf arbol) NIL))
+		((eql (first fbf) 'v) 
+			(mapcar (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))
+		((eql (first fbf) '^ )
+			(mapcan (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))))
+		
+		
+	
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; truth-tree
 ;;; Recibe una expresion y construye su arbol de verdad para 
 ;;; determinar si es SAT o UNSAT
@@ -544,6 +647,7 @@
 ;;;          N   - FBF es UNSAT
 ;;;
 (defun truth-tree (fbf)
+	
   )
 
 
