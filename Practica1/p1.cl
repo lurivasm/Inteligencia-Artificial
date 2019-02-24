@@ -551,7 +551,9 @@
 ;;;	OUTPUT : Expresión transformada
 ;;;
 (defun cambio-doble-implicacion (expr)
-	(list '^ (cambio-implicacion expr) (cambio-implicacion (list (first expr) ( third expr) (second expr)))))
+         (list '^ (cambio-implicacion expr) 
+                  (cambio-implicacion 
+                     (list (first expr) ( third expr) (second expr)))))
 
 
 
