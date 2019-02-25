@@ -559,8 +559,8 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; construye-lista-negada
-;;; Transforma de forma recursiva una expresion de n elementos en una lista 
-;;; de estos n elementos negados
+;;; Transforma de forma recursiva una expresion de n elementos 
+;;; en una lista de estos n elementos negados
 ;;; INPUT : Expresión
 ;;;	OUTPUT : Expresión transformada
 ;;;
@@ -568,7 +568,8 @@
 	(cond
 		((eql expr '()) '())
 		(t 
-			(cons (list '! (first expr)) (construye-lista-negada (rest expr))))))
+                    (cons (list '! (first expr)) 
+                          (construye-lista-negada (rest expr))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;cambio-negacion
@@ -576,29 +577,34 @@
 ;;;	INPUT : Expresión
 ;;;	OUTPUT : Expresión transformada
 ;;;
+;;;
 (defun cambio-negacion (expr)
 	(cond 
-		((eql '! (first (second expr))) (second (second expr)))  			;;; En el caso de una doble negación,
-																		;;; devolvemos la expresión sin negaciones
+	    ((eql '! (first (second expr))) (second (second expr)))           ;;; En el caso de una doble negación,
+									      ;;; devolvemos la expresión sin negaciones
 
-		((eql '^ (first (second expr))) 								;;; En el caso de una negación de un and,
-			(cons 'v (construye-lista-negada (rest (second expr)))))    ;;; devolvemos un or de la lista negada
+	    ((eql '^ (first (second expr))) 				      ;;; En el caso de una negación de un and,
+                     (cons 'v (construye-lista-negada                         ;;; devolvemos un or de la lista negada
+                              (rest (second expr)))))                             
 
-		((eql 'v (first (second expr))) 								;;; En el caso de una negación de un or,
-			(cons '^ (construye-lista-negada (rest (second expr)))))    ;;; devolvemos un and de la lista negada
+	    ((eql 'v (first (second expr))) 			              ;;; En el caso de una negación de un or,
+                     (cons '^ (construye-lista-negada                         ;;; devolvemos un and de la lista negada
+                              (rest (second expr)))))                 
 
-		((eql '=> (first (second expr))) 								;;;En el caso de una negación antes de una implicación,
-			(cambio-negacion 											;;; simplificamos la expresión y llamamos de nuevo a la función
-				(list '! (cambio-implicacion (second expr)))))				
+	    ((eql '=> (first (second expr))) 				      ;;; En el caso de una negación antes de una implicación,
+		     (cambio-negacion 					      ;;; simplificamos la expresión y llamamos de nuevo a la función
+                        (list '! 
+                        (cambio-implicacion (second expr)))))				
 																						
-		((eql '<=> (first (second expr)))                              	;;;En el caso de una negación antes de una implicación																		
-			(cambio-negacion 										   	;;; simplificamos la expresión y llamamos de nuevo a la función
-				(list '! (cambio-doble-implicacion (second expr)))))		
+	    ((eql '<=> (first (second expr)))                                 ;;; En el caso de una negación antes de una implicación																		
+		     (cambio-negacion 					      ;;; simplificamos la expresión y llamamos de nuevo a la función
+                        (list '! 
+                        (cambio-doble-implicacion (second expr)))))		
 
-		(t NIL)))
+	    (t NIL)))
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; transforma
 ;;; Simplifica una fbf 
 ;;; INPUT : fbf
@@ -606,15 +612,19 @@
 ;;;
 (defun transforma (fbf)
 	(cond
-		((literal-p fbf) fbf)									;;; Si la expresion es un literal,lo devuelve
-		((unary-connector-p (first fbf)) 
-				(transforma (cambio-negacion fbf)))				;;; Si es una expr. con un not o algun concdicional, simplifica y llama a la funcion
-		((bicond-connector-p (first fbf)) 
-				(transforma (cambio-doble-implicacion fbf)))
-		((cond-connector-p (first fbf)) 
-				(transforma (cambio-implicacion fbf)))
-		(t (cons (first fbf) 										;;; Si es cualquier otra cosa,llama a la funcion sobre el resto de la expresión
-				(mapcar (lambda (x) (transforma x)) (rest fbf))))))
+            ((literal-p fbf) fbf)					      ;;; Si la expresion es un literal,lo devuelve
+  
+            ((unary-connector-p (first fbf)) 
+                 (transforma (cambio-negacion fbf)))		              ;;; Si es una expr. con un not o algun condicional, simplifica y llama a la funcion
+  
+	    ((bicond-connector-p (first fbf)) 
+                 (transforma (cambio-doble-implicacion fbf)))
+  
+	    ((cond-connector-p (first fbf)) 
+                  (transforma (cambio-implicacion fbf)))
+  
+	    (t (cons (first fbf) 					      ;;; Si es cualquier otra cosa,llama a la funcion sobre el resto de la expresión
+		  (mapcar (lambda (x) (transforma x)) (rest fbf))))))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
