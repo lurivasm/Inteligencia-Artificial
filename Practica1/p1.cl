@@ -636,8 +636,8 @@
 (defun juntar (a b)
 	(cond
 		((null b) nil)
-		((literal-p  b)
-			(cons (list a b) (juntar a (rest b))))
+		((literal-p  (first b)
+			(cons (list a (first b)) (juntar a (rest b))))
 		(t 
 			(cons (cons a (first b)) (juntar a (rest b))))))
 		
@@ -654,11 +654,10 @@
 (defun expand-truth-tree-aux (arbol fbf)
 	(cond
 		
-		((null fbf) arbol) 
 		((eql fbf '^) arbol)
 
 		((literal-p fbf) 
-					(if (null arbol) (expand-truth-tree-aux fbf '^)
+					(if (null arbol) (expand-truth-tree-aux (list fbf) '^)
 									 (expand-truth-tree-aux (juntar fbf arbol) '^)))
 
 		((eql (first fbf) 'v) 
@@ -666,7 +665,7 @@
 
 		((eql (first fbf) '^ )
 			(if (null (second fbf)) arbol
-					(expand-truth-tree-aux (expand-truth-tree-aux '() (second fbf)) 
+					(expand-truth-tree-aux (expand-truth-tree-aux arbol (second fbf)) 
 										   (cons '^ (rest (rest fbf))))))))
 		
 		
