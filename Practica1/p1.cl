@@ -627,6 +627,24 @@
 		  (mapcar (lambda (x) (transforma x)) (rest fbf))))))
 
 
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;
+;;;
+;;;
+(defun juntar (a b)
+	(cond
+		((null b) nil)
+		((literal-p  b)
+			(cons (list a b) (juntar a (rest b))))
+		(t 
+			(cons (cons a (first b)) (juntar a (rest b))))))
+		
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; expand-truth-tree-aux
 ;;; Desarrolla el arbol de verdad de una fbf
@@ -635,12 +653,21 @@
 ;;;
 (defun expand-truth-tree-aux (arbol fbf)
 	(cond
-		((null fbf) arbol)
-		((literal-p fbf) (expand-truth-tree-aux (cons fbf arbol) NIL))
+		
+		((null fbf) arbol) 
+		((eql fbf '^) arbol)
+
+		((literal-p fbf) 
+					(if (null arbol) (expand-truth-tree-aux fbf '^)
+									 (expand-truth-tree-aux (juntar fbf arbol) '^)))
+
 		((eql (first fbf) 'v) 
-			(mapcar (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))
+			(mapcan (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))
+
 		((eql (first fbf) '^ )
-			(mapcan (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))))
+			(if (null (second fbf)) arbol
+					(expand-truth-tree-aux (expand-truth-tree-aux '() (second fbf)) 
+										   (cons '^ (rest (rest fbf))))))))
 		
 		
 	
