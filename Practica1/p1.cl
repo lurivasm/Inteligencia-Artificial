@@ -770,9 +770,52 @@
 ;;;          net: grafo
 ;;; OUTPUT: camino mas corto entre dos nodos
 ;;;         nil si no lo encuentra
-
 (defun bfs-improved (end queue net)
-  )
+	(bfs-improved-recursive end queue nil net))
 
-(defun shortest-path-improved (end queue net)
-  )
+
+(defun bfs-improved-recursive (end queue explored net)
+	(if (null queue) '()
+		(if (null (first queue))
+			nil 
+		(let* ((path (first queue))
+               (node (first path)))
+			;; Si el nodo es el nodo final acabamos
+			(cond ((eql node end) 
+				   (reverse path))
+				  ;; Si el nodo ha sido explorado
+				  ((not (null (member node explored))) 
+				   (bfs-improved-recursive end (rest queue) explored net))
+					;; Si no ha sido explorado realiza una iteracion normal
+				   (T
+                   (bfs-improved-recursive end (append (rest queue) (new-paths path node net)) (cons node explored) net)))))))
+					
+					
+
+(defun shortest-path-improved (start end net)
+	(bfs-improved end (list (list start)) net))
+
+
+;; Grafo no conectado
+(shortest-path-improved 'a 'c '((a b) (b a) (c))) ;; --> No encuentra solución
+
+(shortest-path-improved 'a 'f '(( a d ) ( b d f ) ( c e ) ( d f ) ( e b f ) ( f ))) ;; --> (a d f)
+;; Esta funcion busca el camino mas corto entre a y f en el grafo del pdf de la practica
+;; Se puede observar que efectivamente el camino mas corto es a -> d -> f
+
+(shortest-path-improved 'b 'g '((a b c d e) (b a d e f) (c a g) (d a b g h) 
+						(e a b g h) (f b h) (g c d e h) (h d e f g))) ;; --> (b d g)
+
+
+;; Grafo no conectado
+(shortest-path 'a 'c '((a b) (b a) (c))) ;; --> No encuentra solución
+
+;; Grafo cadena
+(shortest-path 'a 'd '((a b) (b a c) (c b d) (d c))) ;; --> (a b c d)
+
+;; Grafo cuyo nodo inicio y final es el mismo
+(shortest-path 'a 'a '(( a d ) ( b d f ) ( c e ) ( d f ) ( e b f ) ( f ))) ;; --> (a)
+
+
+(cons 'a '(b))
+
