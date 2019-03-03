@@ -547,7 +547,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;cambio-doble-implicacion
 ;;; Transforma una doble implicación A <=> B en (!A v B) ^ (!B v A)
-;;;	INPUT : Expresión
+;;;	INPUT : expr : Expresión
 ;;;	OUTPUT : Expresión transformada
 ;;;
 (defun cambio-doble-implicacion (expr)
@@ -561,8 +561,8 @@
 ;;; construye-lista-negada
 ;;; Transforma de forma recursiva una expresion de n elementos 
 ;;; en una lista de estos n elementos negados
-;;; INPUT : Expresión
-;;;	OUTPUT : Expresión transformada
+;;; INPUT : expr : Expresión
+;;; OUTPUT: Expresión transformada
 ;;;
 (defun construye-lista-negada (expr)
 	(cond
@@ -574,7 +574,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;cambio-negacion
 ;;; Simplifica las expresiones con negaciones
-;;;	INPUT : Expresión
+;;;	INPUT : expr : Expresión
 ;;;	OUTPUT : Expresión transformada
 ;;;
 ;;;
@@ -607,7 +607,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; transforma
 ;;; Simplifica una fbf 
-;;; INPUT : fbf
+;;; INPUT : fbf: expresión a simplificar
 ;;; OUTPUT : fbf simplificada
 ;;;
 (defun transforma (fbf)
@@ -630,17 +630,24 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
-;;;
+;;; juntar
+;;; Concatena un literal (a) con todos los caminos ya almacenados en el 
+;;; arbol (b) pasado como argumento
+;;; INPUT : a : el literal 
+;;          b : el árbol
+;;; OUTPUT: El árbol con los caminos actualizados
 ;;;
 (defun juntar (a b)
 	(cond
-		((null b) nil)
-		((literal-p  (first b)
-			(cons (list a (first b)) (juntar a (rest b))))
-		(t 
-			(cons (cons a (first b)) (juntar a (rest b))))))
-		
+              ((null b) nil)                                           ;; Si el árbol es nil, devuelve nil
+ 
+              ((literal-p  (first b))                                 ;; Si el primer elemento del arbol es un literal, lo
+                 (cons (list a (first b)) (juntar a (rest b))))       ;; concatenamos con a usando un list, y llamamos a juntar
+                                                                      ;; sobre el resto del árbol
+  
+	      (t 
+		 (cons (cons a (first b)) (juntar a (rest b))))))     ;; En cualquier otro caso, lo concatenamos con un cons,
+                                                                      ;; y llamamos a juntar sobre el resto del árbol
 
 
 
@@ -648,47 +655,93 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; expand-truth-tree-aux
 ;;; Desarrolla el arbol de verdad de una fbf
-;;; INPUT : fbf
-;;; OUTPUT : arbol como lista de listas que representan sus ramas
+;;; INPUT : fbf : formula a desarrollar
+;;;         arbol: lista vacia, a rellenar
+;;; OUTPUT : arbol como lista de listas o elementos que representan 
+;;;          sus ramas
 ;;;
 (defun expand-truth-tree-aux (arbol fbf)
 	(cond
+	      ((eql fbf '^) arbol)                                         ;; Si lo que entra es '^, devuelve el arbol
+
+	      ((literal-p fbf)                                             ;; Si la fbf es un literal, y el arbol null, 
+                 (if (null arbol)                                          ;; llama a la función , siendo el arbol la lista con
+                     (expand-truth-tree-aux (list fbf) '^)                 ;; la fbf, y la nueva fbf será ^ (para que devuelva el
+		     (expand-truth-tree-aux (juntar fbf arbol) '^)))       ;; arbol). En otro caso, hace a misma llamada a la función,
+                                                                           ;; pero siendo el árbol el resultado de llamar a juntar 
+                                                                           ;; sobre fbf y arbol
+  
+              ((eql (first fbf) 'v)                                        ;; Si el primer elemento de la fbf es un or, hace un 
+                 (mapcan (lambda (x)                                       ;; mapcan que desarrolla los caminos de los elementos
+                         (expand-truth-tree-aux arbol x)) ( rest fbf)))    ;; del or, añadiendolos al árbol
+
+	      ((eql (first fbf) '^ )                                       ;; Si el primer elemento de la fbf es un and,y si 
+                    (if (null (second fbf))                                ;; el segundo es null, devuelve el arbol. Si el segundo 
+                    arbol                                                  ;; no es null, llama a la función, siendo el árbol el
+                    (expand-truth-tree-aux                                 ;; generado por desarrollar el primer elemento del and
+                       (expand-truth-tree-aux arbol (second fbf))          ;; y siendo la nueva fbf el and del resto de elementos
+	               (cons '^ (rest (rest fbf))))))))
 		
-		((eql fbf '^) arbol)
-
-		((literal-p fbf) 
-					(if (null arbol) (expand-truth-tree-aux (list fbf) '^)
-									 (expand-truth-tree-aux (juntar fbf arbol) '^)))
-
-		((eql (first fbf) 'v) 
-			(mapcan (lambda (x) (expand-truth-tree-aux arbol x)) ( rest fbf)))
-
-		((eql (first fbf) '^ )
-			(if (null (second fbf)) arbol
-					(expand-truth-tree-aux (expand-truth-tree-aux arbol (second fbf)) 
-										   (cons '^ (rest (rest fbf))))))))
 		
-		
-	
-
-
-
-
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; comprueba
+;;; Recibe una rama del arbol y comprueba si hay contradicciones
+;;;
+;;; INPUT  : rama : rama a comprobar
+;;;          pos : lista de elementos positivos. Al principio, vacia
+;;;          neg : lista de elementos negativos. Al principio, vacia
+;;; OUTPUT : T : No hay contradicciones
+;;;          Nil : Hay contradicciones
+;;;
+(defun comprueba (rama pos neg)
+  (cond
+       ((null rama) t)                                            ;; Si la lista llega vacia, es que no hay contradicciones
+       ((negative-literal-p (first rama))                         ;; Si el primer elemento es un literal negativo,
+            (if (member (second (first rama)) pos)                ;; comprobamos si hay contradicción. Si no la hay,
+                 nil                                              ;; llama  comprueba sobre el resto de elementos de la rama,
+                (comprueba (rest rama) pos                        ;; añadiendo el primero a la lista de negativos
+                           (cons (second (first rama)) neg))))
+       (t    
+           (if (member (first rama) neg)                          ;; En cualquier otro caso(positivo), comprobamos si hay 
+                 nil                                              ;; contradicción, y si no la hay , llama a comprueba sobre 
+                (comprueba (rest rama)                            ;; el resto de elementos, añadiendo el primero a la lista de 
+                           (cons (first rama) pos) neg)))))       ;; positivos
+ 
+                            
+                            
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; resuelve
+;;; Recibe un arbol y comprueba recursivamente si hay al menos una 
+;;; rama sin contradicciones
+;;;
+;;; INPUT  : arbol : arbol a comprobar
+;;;       
+;;; OUTPUT : T : Hay una rama sin contradicciones
+;;;          Nil : Hay contradicciones en todas las ramas
+;;;                            
+(defun resuelve (arbol)
+  (cond
+       ((null arbol) nil)                     ;; Si el arbol es vacio, significa que hay contradicciones en todas las ramas
+       ((literal-p (first arbol))             ;; Si el primer elemento es un literal, no hay contradiccion posible, devuelve t
+            t) 
+       ((comprueba (first arbol) '() '())     ;; Si en la primera rama hay contradicciones, llama a resuelve sobre el resto del arbol
+            t)
+       (t (resuelve (rest arbol)))))          ;; En caso de que en la primera rama no haya contradiccion, devuelve t
+   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; truth-tree
 ;;; Recibe una expresion y construye su arbol de verdad para 
 ;;; determinar si es SAT o UNSAT
 ;;;
-;;; INPUT  : fbf - Formula bien formada (FBF) a analizar.
-;;; OUTPUT : T   - FBF es SAT
-;;;          N   - FBF es UNSAT
+;;; INPUT  : fbf : Formula bien formada (FBF) a analizar.
+;;; OUTPUT : T : FBF es SAT
+;;;          N : FBF es UNSAT
 ;;;
 (defun truth-tree (fbf)
-	
-  )
+       (resuelve (expand-truth-tree-aux '() (transforma fbf))))    ;; Llama a resuelve sobre el arbol desarrollado 
+                                                                   ;; a partir de la fbf transformada  
 
-
+                                       
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; EJERCICIO 5
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
