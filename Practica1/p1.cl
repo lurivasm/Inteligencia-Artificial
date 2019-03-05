@@ -811,22 +811,40 @@
 						(e a b g h) (f b h) (g c d e h) (h d e f g))) ;; --> (b d g)
 
 
+;; Grafo no conectado
+(shortest-path 'a 'c '((a b) (b a) (c))) ;; --> No encuentra solución (bucle infinito)
+
+;; Grafo cadena
+(shortest-path 'a 'd '((a b) (b a c) (c b d) (d c))) ;; --> (a b c d)
+
+;; Grafo cuyo nodo inicio y final es el mismo
+(shortest-path 'a 'a '(( a d ) ( b d f ) ( c e ) ( d f ) ( e b f ) ( f ))) ;; --> (a)
+
  
 
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; shortest-path-improved
-;;; Version de busqueda en anchura que no entra en recursion
-;;; infinita cuando el grafo tiene ciclos
-;;; INPUT:   end: nodo final
-;;;          queue: cola de nodos por explorar
-;;;          net: grafo
-;;; OUTPUT: camino mas corto entre dos nodos
-;;;         nil si no lo encuentra
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Breadth-first-search-improved in graphs
+;;;
+;;; Algoritmo de busqueda en anchura
+;;; INPUT: end -> nodo final
+;;;		   queue -> lista de nodos que contiene nodo raiz
+;;;        net -> grafo completo
+;;; OUTPUT : camino más corto de nodo raiz a nodo end
+;;;
 (defun bfs-improved (end queue net)
 	(bfs-improved-recursive end queue nil net))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Breadth-first-search-improved-recursive in graphs
+;;;
+;;; Algoritmo de busqueda en anchura
+;;; INPUT: end -> nodo final
+;;;		   queue -> lista de nodos que contiene nodo raiz
+;;; 	   explored -> lista de nodos explorados
+;;;        net -> grafo completo
+;;; OUTPUT : camino más corto de nodo raiz a nodo end
+;;;
 (defun bfs-improved-recursive (end queue explored net)
 	(if (null queue) '()
 		(if (null (first queue))
@@ -841,10 +859,20 @@
 				   (bfs-improved-recursive end (rest queue) explored net))
 					;; Si no ha sido explorado realiza una iteracion normal
 				   (T
-                   (bfs-improved-recursive end (append (rest queue) (new-paths path node net)) (cons node explored) net)))))))
+                   (bfs-improved-recursive end (append (rest queue) 
+										   (new-paths path node net)) 
+										   (cons node explored) net)))))))
 					
 					
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; shortest-path-improved
+;;; Version de busqueda en anchura que no entra en recursion
+;;; infinita cuando el grafo tiene ciclos
+;;; INPUT:   end: nodo final
+;;;          queue: cola de nodos por explorar
+;;;          net: grafo
+;;; OUTPUT: camino mas corto entre dos nodos
+;;;         nil si no lo encuentra
 (defun shortest-path-improved (start end net)
 	(bfs-improved end (list (list start)) net))
 
@@ -859,16 +887,4 @@
 (shortest-path-improved 'b 'g '((a b c d e) (b a d e f) (c a g) (d a b g h) 
 						(e a b g h) (f b h) (g c d e h) (h d e f g))) ;; --> (b d g)
 
-
-;; Grafo no conectado
-(shortest-path 'a 'c '((a b) (b a) (c))) ;; --> No encuentra solución
-
-;; Grafo cadena
-(shortest-path 'a 'd '((a b) (b a c) (c b d) (d c))) ;; --> (a b c d)
-
-;; Grafo cuyo nodo inicio y final es el mismo
-(shortest-path 'a 'a '(( a d ) ( b d f ) ( c e ) ( d f ) ( e b f ) ( f ))) ;; --> (a)
-
-
-(cons 'a '(b))
 
