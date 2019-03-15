@@ -154,15 +154,15 @@
 	(if 
 		(assoc state sensors) 								;; Si existe alguna lista en sensors que tenga la información sobre state,
 			(first (second (assoc state sensors)))			;; devolvemos el primer elemento de la sublista (tiempo, dinero); si no 
-			nil												;; está, devolvemos nil
-  ))
+			nil ))												;; está, devolvemos nil
+
 
 (defun f-h-price (state sensors)
 	(if 
 		(assoc state sensors) 								;; Si existe alguna lista en sensors que tenga la información sobre state,
 			(second (second (assoc state sensors)))			;; devolvemos el segundo elemento de la sublista (tiempo, dinero); si no 
-			nil												;; está, devolvemos nil
-  ))
+			nil	))											;; está, devolvemos nil
+  
 ;;
 ;; END: Exercise 1 -- Evaluation of the heuristic
 ;;
@@ -195,21 +195,25 @@
 ;;    the destination in the states to which the current one is connected
 ;;
 (defun navigate (state lst-edges cfun  name &optional forbidden )
-  )
+  (when (not (null lst-edges))														; Si la lista de conexiones del grafo es nil devuelve nil
+		(let ((edge (car lst-edges)))												; Llamamos edge a la primera conexión de la lista
+			(cond 
+				((eql state (car edge))												; Si el estado del cual buscamos las conexiones es el primer 																					
+					(if (member (cadr edge) forbidden)								; elemento de edge, en el caso de que el destino este en la 
+						(navigate state (cdr lst-edges) 							; lista de prohibidos , seguimos con el resto de las conexiones;
+										cfun name forbidden)						; en caso contrario, creamos la acción y la concatenamos con el 
+						(cons 														; resultado de llamar nuevamente a navigate sobre el resto de 
+							(make-action :name name									; la lista de conexiones
+										:origin state								
+										:final (cadr edge)
+										:cost (funcall cfun (caddr edge)))
+							(navigate state (cdr lst-edges) 
+											cfun name forbidden))))					
+				(t (navigate state (cdr lst-edges) 									; En cualquier otro caso, continúa con el resto de la lista de 
+									cfun name forbidden))))))						; conexiones
+			
 
-
-(nav-aux (state lst-edges name cfun)
-	(when (not (null lst-edges))
-		(let ((edge (car lst-edges)))
-			(if (eql state (car edge))
-			(cons 
-				(make-action :name name
-							:orig state
-							:final (cadr edge)
-							:cost (funcall cfun (caddr edge)))
-				(nav-aux state (cdr lst-edges) name cfun))
-			(nav-aux state (cdr lst-edges) name cfun)))))
-				
+			
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -224,6 +228,7 @@
   )
 
 (defun navigate-canal-price (state canals)
+	(navigate state canals #'cadr 'canals-price '())
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -237,9 +242,11 @@
 ;; Note that this function takes as a parameter a list of forbidden cities.
 ;;
 (defun navigate-train-time (state trains forbidden)
+	(navigate state trains #'car 'train-time forbidden)
   )
   
 (defun navigate-train-price (state trains forbidden)
+	(navigate state trains #'cadr 'train-price forbidden)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -266,7 +273,36 @@
 ;;         of the mandatory cities are missing from the path.
 ;;
 (defun f-goal-test (node destination mandatory) 
-  )
+	(if (member (node-state node) destination)
+		(mandatory-rec node mandatory)				 
+		nil))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; madatory-rec
+;;
+;;  Returns T or NIl depending on whether the final stage has visited all the 
+;;  mandatory cities
+;;
+;;  Input:
+;;    node:       node structure that contains, in the chain of parent-nodes,
+;;                a path starting at the initial state
+;;    mandatory:  list with the names of the cities that is mandatory to visit
+;;
+;;  Returns
+;;    T: the path is a valid path to the final state
+;;    NIL: invalid path: either the final city is not a destination or some
+;;         of the mandatory cities are missing from the path.
+;;
+(defun mandatory-rec (node mandatory)
+	(cond 
+		((null mandatory) t)											; Si la lista mandatory está vacía, devuelve true pues todos han sido visitados
+		((null (node-parent node)) nil)									; Si el padre del nodo actual es nil, es el nodo origen, devuelve nil porque
+		(t  															; no ha visitado todos los nodos de mandatory
+			(mandatory-rec (node-parent node) 
+						   (remove (node-state node) mandatory)))))     ; En otro caso, devuelve recursivamente la misma función con con nodo padre
+																		; y eliminando el nodo actual de mandatory
+
 
 ;;
 ;; END: Exercise 3 -- Goal test
