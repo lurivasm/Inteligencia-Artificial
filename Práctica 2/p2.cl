@@ -204,9 +204,9 @@
 										cfun name forbidden)						; en caso contrario, creamos la acción y la concatenamos con el 
 						(cons 														; resultado de llamar nuevamente a navigate sobre el resto de 
 							(make-action :name name									; la lista de conexiones
-										:origin state								
-										:final (cadr edge)
-										:cost (funcall cfun (caddr edge)))
+										 :origin state								
+										 :final (cadr edge)
+										 :cost (funcall cfun (caddr edge)))
 							(navigate state (cdr lst-edges) 
 											cfun name forbidden))))					
 				(t (navigate state (cdr lst-edges) 									; En cualquier otro caso, continúa con el resto de la lista de 
@@ -302,8 +302,6 @@
 			(mandatory-rec (node-parent node) 
 						   (remove (node-state node) mandatory)))))     ; En otro caso, devuelve recursivamente la misma función con con nodo padre
 																		; y eliminando el nodo actual de mandatory
-
-
 ;;
 ;; END: Exercise 3 -- Goal test
 ;;
@@ -331,7 +329,69 @@
 ;;    NIL: The nodes are not equivalent
 ;;
 (defun f-search-state-equal (node-1 node-2 &optional mandatory)
-  )
+	(if (eql (node-state node-1)									; Primero comparamos el estado de los nodos (el nombre de las ciudades)
+			   (node-state node-2))									; y si son iguales llamamos a la funcion mandatory-equal para comparar
+		(mandatory-equal (generate-mandatory node-1 mandatory) 		; las ciudades obligatorias que han visitado
+						 (generate-mandatory node-2 mandatory))
+		nil))														; Si no tienen el mismo nombre directamente devolvemos nil
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Generate the list of mandatory and not visited cities by the node "node"
+;;  Input:
+;;    node : we want the mandatory list of this node
+;;    mandatory:  list with the names of the cities that is mandatory to visit
+;;
+;;  Returns
+;;    mandatory: the mandatory cities the node has not visited
+;;    NIL: the node has visited all the mandatory nodes
+;;
+(defun generate-mandatory (node mandatory)
+	(cond 
+		((null mandatory) '())											; Si la lista mandatory está vacía, devuelve nil pues todos han sido visitados
+		((null (node-parent node)) mandatory)							; Si el padre del nodo actual es nil, es el nodo origen, devuelve mandatory, es 
+		(t  															; decir, devuelve la lista de nodos no visitados de los obligados
+			(generate-mandatory (node-parent node) 
+						(remove (node-state node) mandatory)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Compares lis1 and list2
+;;  Input:
+;;    list1 : list with the mandatory and visited cities of node-1
+;;    list2 : list with the mandatory and visited cities of node-2
+;;
+;;  Returns
+;;    t :the lists are equal
+;;    NIL: the lists are not equal
+;;
+(defun mandatory-equal (list1 list2)
+	(cond 
+		((null list1)											; Si list1 y list2 estan vacias devuelve t porque son iguales
+			(if (null list2) t									; Si list1 esta vacia y list 2 no esta vacia devuelve nil porque no son iguales
+							 nil))								
+		((null (member (first list1) list2)) nil)				; Si el primer elemento de list1 no esta en list2 devuelve nil porque no son iguales
+		(t 
+			(mandatory-equal (rest list1)						; En otro caso devuelve recursivamente la misma funcion con el resto de list1 y 
+							 (remove (first list1) list2)))))	; eliminando de list2 el primer elemento de list1  porque hemos comprobado que esta
+
+(defparameter node-nevers
+   (make-node :state 'Nevers) )
+(defparameter node-paris
+   (make-node :state 'Paris :parent node-nevers))
+(defparameter node-nancy
+   (make-node :state 'Nancy :parent node-paris))
+(defparameter node-reims
+   (make-node :state 'Reims :parent node-nancy))
+(defparameter node-calais
+   (make-node :state 'Calais :parent node-reims))
+(defparameter node-calais-2
+   (make-node :state 'Calais :parent node-paris))
+
+(f-search-state-equal node-calais node-calais-2 '()) ;-> T
+(f-search-state-equal node-calais node-calais-2 '(Reims)) ;-> NIL
+(f-search-state-equal node-calais node-calais-2 '(Nevers)) ;-> T
+(f-search-state-equal node-nancy node-paris '()) ;-> NIL
 
 ;;
 ;; END: Exercise 4 -- Equal predicate for search states
@@ -353,15 +413,28 @@
 ;;  There are two problems defined: one minimizes the travel time,
 ;;  the other minimizes the cost
 
-(defparameter *travel-cheap* 
-  (make-problem 
-   )
-  )
+(defparameter *travel-cheap*
+	(make-problem
+		:states 				*cities*																		; Lista de ciudades
+		:initial-state 			*origin*																		; Ciudad desde donde partimos
+		:f-h 					#'(lambda (state) (f-h-price state *estimate*))									; Heuristica basada en el precio
+		:f-goal-test 			#'(lambda (node) (f-goal-test *destination* *mandatory*))						; Evalua si hemos llegado al final
+		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))		; Evalua nodos de igual estado
+		:operators 				(list
+									 #'(lambda (node) (navigate-canal-price (node-state node) *canals*))		; Operador por canales y precio
+									 #'(lambda (node) (navigate-train-price (node-state node) *trains*)))))		; Operador por trenes y precio
 
-(defparameter *travel-fast* 
-  (make-problem 
-   )
-  )
+(defparameter *travel-fast*
+	(make-problem
+		:states 				*cities*																		; Lista de ciudades
+		:initial-state 			*origin*																		; Ciudad desde donde partimos
+		:f-h 					#'(lambda (state) (f-h-time state *estimate*))									; Heuristica basada en el tiempo
+		:f-goal-test 			#'(lambda (node) (f-goal-test *destination* *mandatory*))						; Evalua si hemos llegado al final
+		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))		; Evalua nodos de igual estado
+		:operators 				(list
+									#'(lambda (node) (navigate-canal-time (node-state node) *canals*))			; Operador por canales y tiempo
+									#'(lambda (node) (navigate-train-time (node-state node) *trains*)))))		; Operador por trenes y tiempo
+
 
 ;;
 ;;  END: Exercise 5 -- Define the problem structure
@@ -404,8 +477,69 @@
 ;;    given one
 ;;
 (defun expand-node (node problem)
-  )
+	)
 
+(funcall (first (problem-operators *travel-cheap*)) node-paris)
+
+(defparameter node-marseille-ex6
+   (make-node :state 'Marseille :depth 12 :g 10 :f 20) )
+
+(defparameter lst-nodes-ex6
+  (expand-node node-marseille-ex6 *travel-fast*)) 
+
+(print lst-nodes-ex6) ; ->
+;(#S(NODE :STATE TOULOUSE
+;         :PARENT #S(NODE
+;                    :STATE
+;                    MARSEILLE
+;                    :PARENT
+;                    NIL
+;                    :ACTION
+;                    NIL
+;                    :DEPTH
+;                    12
+;                    :G
+;                    10
+;                    :H
+;                    0
+;                    :F
+;                    20)
+;         :ACTION #S(ACTION
+;                    :NAME
+;                    NAVIGATE-TRAIN-TIME
+;                    :ORIGIN
+;                    MARSEILLE
+;                    :FINAL
+;                    TOULOUSE
+;                    :COST
+;                    65.0)
+;         :DEPTH 13
+;        :G 75.0
+;         :H 130.0
+;         :F 205.0)) 
+;(#S(NODE :STATE TOULOUSE
+;         :PARENT #S(NODE
+;                    :STATE
+;                    MARSEILLE
+;                    :PARENT
+;                    NIL
+;                    :ACTION
+;                    NIL
+;                    :DEPTH
+;                    12
+;                    :G
+;                    ...)
+;        :ACTION #S(ACTION
+;                   :NAME
+;                    NAVIGATE-TRAIN-TIME
+;                    :ORIGIN
+;                    MARSEILLE
+;                    :FINAL
+;                    TOULOUSE
+;                    :COST
+;                    65.0)
+;         :DEPTH 13
+;         :G ...))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;  BEGIN Exercise 7 -- Node list management
