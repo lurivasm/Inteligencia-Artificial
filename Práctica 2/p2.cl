@@ -416,24 +416,24 @@
 (defparameter *travel-cheap*
 	(make-problem
 		:states 				*cities*																		; Lista de ciudades
-		:initial-state 			*origin*																		; Ciudad desde donde partimos
-		:f-h 					#'(lambda (state) (f-h-price state *estimate*))									; Heuristica basada en el precio
-		:f-goal-test 			#'(lambda (node) (f-goal-test *destination* *mandatory*))						; Evalua si hemos llegado al final
-		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))		; Evalua nodos de igual estado
-		:operators 				(list
-									 #'(lambda (node) (navigate-canal-price (node-state node) *canals*))		; Operador por canales y precio
-									 #'(lambda (node) (navigate-train-price (node-state node) *trains*)))))		; Operador por trenes y precio
+		:initial-state 		*origin*																		; Ciudad desde donde partimos
+		:f-h 				#'(lambda (state) (f-h-price state *estimate*))										; Heuristica basada en el precio
+		:f-goal-test 			#'(lambda (node) (f-goal-test  node *destination* *mandatory*))							; Evalua si hemos llegado al final
+		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))				; Evalua nodos de igual estado
+		:operators 			(list
+								 #'(lambda (node) (navigate-canal-price (node-state node) *canals*))					; Operador por canales y precio
+								 #'(lambda (node) (navigate-train-price (node-state node) *trains* *mandatory*)))))		; Operador por trenes y precio
 
 (defparameter *travel-fast*
 	(make-problem
 		:states 				*cities*																		; Lista de ciudades
-		:initial-state 			*origin*																		; Ciudad desde donde partimos
-		:f-h 					#'(lambda (state) (f-h-time state *estimate*))									; Heuristica basada en el tiempo
-		:f-goal-test 			#'(lambda (node) (f-goal-test *destination* *mandatory*))						; Evalua si hemos llegado al final
-		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))		; Evalua nodos de igual estado
-		:operators 				(list
-									#'(lambda (node) (navigate-canal-time (node-state node) *canals*))			; Operador por canales y tiempo
-									#'(lambda (node) (navigate-train-time (node-state node) *trains*)))))		; Operador por trenes y tiempo
+		:initial-state 		*origin*																		; Ciudad desde donde partimos
+		:f-h 				#'(lambda (state) (f-h-time state *estimate*))										; Heuristica basada en el tiempo
+		:f-goal-test 			#'(lambda (node) (f-goal-test node *destination* *mandatory*))							; Evalua si hemos llegado al final
+		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))				; Evalua nodos de igual estado
+		:operators 			(list
+								#'(lambda (node) (navigate-canal-time (node-state node) *canals*))					; Operador por canales y tiempo
+								#'(lambda (node) (navigate-train-time (node-state node) *trains* *mandatory*)))))		; Operador por trenes y tiempo
 
 
 ;;
@@ -477,69 +477,56 @@
 ;;    given one
 ;;
 (defun expand-node (node problem)
-	)
+	(let ((list1 (funcall (first (problem-operators problem)) node))				; List1 es la lista  de acciones generada por el primer operador del problema,
+		 (list2 (funcall (second (problem-operators problem)) node)))			; mientras que list2 es la generada por el segundo operador
 
-(funcall (first (problem-operators *travel-cheap*)) node-paris)
+	(if (null list1)													; Si la primera lista es null y la segunda también, se devuelve nil
+		(if (null list2) 
+			nil
+			(create-node-list list2 node problem))									; Si la segunda no es nil, se crea la lista de nodos a raiz de list2
+		(if (null list2)												; Si la primera lita no es null, y la segunda si , se crea la lista de nodos a raiz 
+			(create-node-list list1 node problem)										; de list1
+			(create-node-list (append list1 list2) node problem)))))						; Si ambas no son nil, se crea la lista de nodos a raiz de la unión de list1 y list2
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;;  Creates a list with all the nodes that can be reached from the
+;;  current one using all the operators in a given problem and the list 
+;;  of all the possible actions
+;;
+;;  Input:
+;;	 actions : list of all the actions from the node
+;;    node:   the node structure from which we start.
+;;    problem: the problem structure with the list of operators
+;;
+;;  Returns:
+;;    A list (node_1,...,node_n) of nodes that can be reached from the
+;;    given one
+;;
+(defun create-node-list (actions node problem)
+	(let ((action (first actions)))
+	(cond
+		((null actions) '())
+		(t (cons (make-node 
+				:state	(action-final action)
+				:parent 	node
+				:action 	action
+				:depth	(+ 1 (node-depth node))
+				:g		(+ (action-cost action) (node-g node))
+				:h		(funcall (problem-f-h problem) 
+							    (action-final action))
+				:f		(+ (+ (action-cost action) (node-g node))
+						   (funcall (problem-f-h problem) 
+							       (action-final action))))
+				(create-node-list (rest actions) node problem))))))
+				
 
 (defparameter node-marseille-ex6
    (make-node :state 'Marseille :depth 12 :g 10 :f 20) )
 
 (defparameter lst-nodes-ex6
-  (expand-node node-marseille-ex6 *travel-fast*)) 
-
-(print lst-nodes-ex6) ; ->
-;(#S(NODE :STATE TOULOUSE
-;         :PARENT #S(NODE
-;                    :STATE
-;                    MARSEILLE
-;                    :PARENT
-;                    NIL
-;                    :ACTION
-;                    NIL
-;                    :DEPTH
-;                    12
-;                    :G
-;                    10
-;                    :H
-;                    0
-;                    :F
-;                    20)
-;         :ACTION #S(ACTION
-;                    :NAME
-;                    NAVIGATE-TRAIN-TIME
-;                    :ORIGIN
-;                    MARSEILLE
-;                    :FINAL
-;                    TOULOUSE
-;                    :COST
-;                    65.0)
-;         :DEPTH 13
-;        :G 75.0
-;         :H 130.0
-;         :F 205.0)) 
-;(#S(NODE :STATE TOULOUSE
-;         :PARENT #S(NODE
-;                    :STATE
-;                    MARSEILLE
-;                    :PARENT
-;                    NIL
-;                    :ACTION
-;                    NIL
-;                    :DEPTH
-;                    12
-;                    :G
-;                    ...)
-;        :ACTION #S(ACTION
-;                   :NAME
-;                    NAVIGATE-TRAIN-TIME
-;                    :ORIGIN
-;                    MARSEILLE
-;                    :FINAL
-;                    TOULOUSE
-;                    :COST
-;                    65.0)
-;         :DEPTH 13
-;         :G ...))
+  (expand-node node-marseille-ex6 *travel-fast*))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;  BEGIN Exercise 7 -- Node list management
@@ -570,6 +557,36 @@
 ;;;  and calls insert-nodes
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Inserts a node in an ordered list keeping the result list
+;; ordered with respect to the given comparison function
+;;
+;; Input:
+;;    node: the node to be inserted in the
+;;           other list
+;;    left: the list of nodes than will be at the left side of the node
+;;    right: the list of nodes than will be at the right side of the node
+;;    node-compare-p: a function node x node --> 2 that returns T if the 
+;;                    first node comes first than the second.
+;;
+;; Returns:
+;;    An ordered list of nodes which includes the node given and 
+;;    those of the list "nodes@. The list is ordered with respect to the 
+;;   criterion node-compare-p.
+;; 
+(defun insert-node (node left right node-compare-p)
+	(if (null right) 												; Si right es null, significa que el nodo va a final de la lista
+			(append left (list node))
+			(if (funcall node-compare-p (first right) node)				; Si el primer nodo de right va antes que node, lo metemos en left
+				(insert-node node 									; y llamamos a la función sobre el reto de la lista
+						  (append left (list (first right)))
+						  (rest right) node-compare-p)
+				(append left (list node) right))))						; Si node va antes, juntamos left con el nodo y con rigt, resultando la lista ordenada
+		
+
+(insert-node 11 '() '(3 6 8 10 13) #'<) ; -> (3 6 8 10 11 13)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Inserts a list of nodes in an ordered list keeping the result list
@@ -589,8 +606,14 @@
 ;;   criterion node-compare-p.
 ;; 
 (defun insert-nodes (nodes lst-nodes node-compare-p)
-  )
+	(if (null nodes)
+		lst-nodes
+		(insert-nodes (rest nodes) 
+				    (insert-node (first nodes) 
+							  '() lst-nodes node-compare-p)
+				    node-compare-p)))
 
+ (insert-nodes '(4 7 3 11 15) '(1 5 10 13) #'<) ;-> (1 3 4 5 7 10 11 13 15)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Inserts a list of nodes in an ordered list keeping the result list
@@ -616,7 +639,32 @@
 ;;   use it to call insert-nodes.
 ;;
 (defun insert-nodes-strategy (nodes lst-nodes strategy)
-  )
+	(insert-nodes nodes lst-nodes (strategy-node-compare-p strategy)))
+  
+
+(defun node-g-<= (node-1 node-2)
+  (<= (node-g node-1)
+      (node-g node-2)))
+
+(defparameter *uniform-cost*
+  (make-strategy
+   :name 'uniform-cost
+   :node-compare-p #'node-g-<=))
+
+(defparameter node-paris-ex7
+  (make-node :state 'Paris :depth 0 :g 0 :f 0) )
+
+(defparameter node-nancy-ex7
+  (make-node :state 'Nancy :depth 2 :g 50 :f 50) )
+
+
+(defparameter sol-ex7 (insert-nodes-strategy (list node-paris-ex7 node-nancy-ex7) 
+                                             lst-nodes-ex6
+                                             *uniform-cost*))
+
+(mapcar #'(lambda (x) (node-state x)) sol-ex7) ; -> (PARIS AVIGNON NANCY TOULOUSE)
+(mapcar #'(lambda (x) (node-g x)) sol-ex7) ; -> (0 26 50 75)
+
 
 ;;
 ;;    END: Exercize 7 -- Node list management
@@ -633,8 +681,26 @@
 ;; us which nodes should be analyzed first. In the A* strategy, the first 
 ;; node to be analyzed is the one with the smallest value of g+h
 ;;
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Compares the f value of two nodes
+;; Input:
+;;    node1: first node
+;;    node2 : second node
+;;
+;; Returns: T if the f value of node1 is smaller or equal to the f value
+;;		  of node2, nil otherwise
+;;  
+(defun node-f-<= (node1 node2)
+	(<= (node-f node1)
+	    (node-f node2)))
+
 (defparameter *A-star*
-  (make-strategy ))
+  (make-strategy 
+	:name 'A-star
+	:node-compare-p #'node-f-<= ))
 
 ;;
 ;; END: Exercise 8 -- Definition of the A* strategy
@@ -697,8 +763,36 @@
 ;;     whole path from the starting node to the final.
 ;;
 (defun graph-search-aux (problem open-nodes closed-nodes strategy)
-  )
+	(if (null open-nodes)															;; Si la lista de abiertos está vacía, se devuelve nil
+		nil
+		(let ((node (first open-nodes)))												;; En otro caso, si el nodo a expandir es un nodo final, lo devolvemos
+			(if (funcall (problem-f-goal-test problem) node)
+				node
+				(let ((rep (member-if 												;; Si no es final, buscamos si hay ya un nodo de busqueda igual en la lista.
+						  #'(lambda (x) (funcall 									;; Si lo hay, member-if devolverá una lista cuyo primer elemento será este nodo
+								(problem-f-search-state-equal problem) 
+									node x))
+						  closed-nodes)))
+				(if rep															;; En caso de que rep no sea nil, miramos si este nodo de busqueda encontrado 
+					(if (> (node-g node) (node-g (first rep)))							;; tiene un coste g menor que el del nodo a explorar. En tal caso, no modificamos
+						(graph-search-aux problem (rest open-nodes)						;; la lista , no expandimos el nodo y seguimos
+									   closed-nodes strategy)
 
+						(graph-search-aux problem 									;; En caso de que sea mayor, llamamos a la función añadiendo a open-nodes los nodos
+								   (insert-nodes-strategy 							;; obtenidos al expandir node, quitando de closed-nodes el primer elemento de rep
+										(expand-node node problem) 					;; , y añadiendo al principio el nodo explorado
+										 (rest open-nodes) strategy)					
+								   (cons node 
+									   (remove (first rep) closed-nodes))
+								   strategy))
+
+				(graph-search-aux problem 											;; Si rep es nil, llamamos a la función añadiendo a open-nodes los nodos
+						(insert-nodes-strategy 										;; obtenidos al expandir node, y añadiendo node a closed-nodes
+							 (expand-node node problem) 					
+							 (rest open-nodes) strategy)					
+						(cons node closed-nodes) strategy)))))))
+							 
+																		
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;  Interface function for the graph search. 
@@ -721,15 +815,24 @@
 ;;    and an empty closed list.
 ;;
 (defun graph-search (problem strategy)
-  )
+	(graph-search-aux problem (list (make-node 
+								:state (problem-initial-state problem) 
+								:parent nil
+								:action nil
+								:h (funcall (problem-f-h problem) *origin*)
+								:f (funcall (problem-f-h problem) *origin*)))
+						  '() strategy))
+  
 
 ;
 ;  A* search is simply a function that solves a problem using the A* strategy
 ;
 (defun a-star-search (problem)
-  )
+	(graph-search problem *A-star*))
+  
 
 
+(a-star-search *travel-fast*) ;->
 ;;
 ;; END: Exercise 9 -- Search algorithm
 ;;
