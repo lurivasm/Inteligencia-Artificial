@@ -843,18 +843,139 @@
 ;;; 
 ;;;    BEGIN Exercise 10: Solution path
 ;;;
-;*** solution-path ***
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Solution-path
+;;
+;;  Input:
+;;    node : returned node by a problem algorithm (ie a-star)
+;;
+;;    Returns:
+;;     nil if the node is an empty node (ie there ir no path)
+;;     In other case it returns the list of states or names of the cities 
+;;        that have been visited in the path
+;;
 
 (defun solution-path (node)
-  )
+    (unless (null node)												; Si le pasamos una lista vacía devuelve nil
+        (solution-path-recursive '() node)))						; Sino llama a la funcion recursiva que calcula el camino
+ 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Solution-path-recursive
+;;
+;;  Input:
+;;    lista : lists of states or cities that have been visited
+;;    node : the actual node we are
+;;
+;;    Returns:
+;;     nil if the node is an empty node (ie there ir no path)
+;;     In other case it returns the list of states or names of the cities 
+;;        that have been visited in the path
+;;       
+(defun solution-path-recursive (lista node)
+    (if (null (node-parent node))									; Si llegamos al nodo padre, devolvemos la lista incluyendo el nodo actual
+         (cons (node-state node) lista)
+         (solution-path-recursive (cons (node-state node) lista) 	; Sino, llamamos recursivamente a la misma funcion, pasandole el camino añadiendole
+                                  (node-parent node))))				; el nodo actual y con el nodo padre
 
-;*** action-sequence ***
-; Visualize sequence of actions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Action-sequence
+;;
+;;  Input:
+;;    node : returned node by a problem algorithm (ie a-star)
+;;
+;;    Returns:
+;;     nil if the node is an empty node (ie there ir no path)
+;;     In other case it returns the list of actions that have been made 
+;; 		  in the algorithm
+;;
 
 (defun action-sequence (node)
-  )
+    (unless (null node)												; Si el nodo es nil significa que no hay solucion
+        (action-sequence-recursive '() node)))						; Sino devolvemos la funcion recursiva pasando una lista de acciones
+																	; vacias y el nodo actual
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  action-sequence-recursive
+;;
+;;  Input:
+;;    lista : lists of actions that have been executed
+;;    node : the actual node we are
+;;
+;;    Returns:
+;;     nil if the node is an empty node (ie there ir no path)
+;;     In other case it returns the list of actions that have been executed
+;;        during the execution of the algorithm
+;;
+(defun action-sequence-recursive (lista node)
+    (if (null (node-parent node))									; Si el padre del nodo actual es nil hemos llegado al nodo padre
+         (cons (node-action node) lista)							; luego solo devolvemos la lista añadiendo el nodo padre
+         (action-sequence-recursive (cons (node-action node) lista) ; Sino devolvemos recursivamente la funcion añadiendo a la lista el
+                                    (node-parent node))))			; nodo actual y con el nodo padre del actual hasta encontrar el nodo padre
+
+
 
 ;;; 
 ;;;    END Exercise 10: Solution path / action sequence
+;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 
+;;;    BEGIN Exercise 11
+;;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 
+;;; Búsqueda en anchura
+;;;
+;;; Es un algoritmo de busqueda no informada, es decir, sin heurística, basado
+;;;    en una cola FIFO, dando preferencia a los nodos descubiertos en orden
+;;;    temporal (first in first out). Entonces basta con poner nil en el 
+;;;    algoritmo de comparación para ponerlos por delante.
+;;;
+
+(defun breadth-first-node-compare-p (node-1 node-2)
+	nil)
+
+(defparameter *breadth-first*
+	(make-strategy
+	:name 'breadth-first
+	:node-compare-p #'breadth-first-node-compare-p))
+
+(solution-path (graph-search *travel-cheap* *breadth-first*))
+;; -> (MARSEILLE TOULOUSE LYON ROENNE NEVERS LIMOGES ORLEANS NANTES BREST ST-MALO
+;;               PARIS ST-MALO BREST NANTES TOULOUSE LYON NANCY REIMS CALAIS)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; 
+;;; Búsqueda en profundidad
+;;;
+;;; Es un algoritmo de busqueda no informada, es decir, sin heurística, basado
+;;;    en una cola LIFO, dando preferencia a los nodos que acabamos de descubrir,
+;;;    es decir, que una vez descubierto un nodo, lo visita en profundidad hasta 
+;;;    su nodo hoja, dejando para el final los descubiertos antes (last in first out)
+;;;    Por eso, solo es necesario poner true en el algoritmo de comparación, pues se
+;;;    van al final de la cola
+
+(defun depth-first-node-compare-p (node-1 node-2)
+	t)
+
+(defparameter *depth-first*
+	(make-strategy
+	:name 'depth-first
+	:node-compare-p #'depth-first-node-compare-p))
+
+
+(solution-path (graph-search *travel-fast* *depth-first*))
+;; -> (MARSEILLE TOULOUSE NANTES ST-MALO PARIS CALAIS) 
+
+;;;
+;;; 
+;;;    END Exercise 11
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
