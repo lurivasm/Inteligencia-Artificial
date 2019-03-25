@@ -422,7 +422,7 @@
 		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))				; Evalua nodos de igual estado
 		:operators 			(list
 								 #'(lambda (node) (navigate-canal-price (node-state node) *canals*))					; Operador por canales y precio
-								 #'(lambda (node) (navigate-train-price (node-state node) *trains* *mandatory*)))))		; Operador por trenes y precio
+								 #'(lambda (node) (navigate-train-price (node-state node) *trains* *forbidden*)))))		; Operador por trenes y precio
 
 (defparameter *travel-fast*
 	(make-problem
@@ -433,7 +433,7 @@
 		:f-search-state-equal 	#'(lambda (node-1 node-2) (f-search-state-equal node-1 node-2 *mandatory*))				; Evalua nodos de igual estado
 		:operators 			(list
 								#'(lambda (node) (navigate-canal-time (node-state node) *canals*))					; Operador por canales y tiempo
-								#'(lambda (node) (navigate-train-time (node-state node) *trains* *mandatory*)))))		; Operador por trenes y tiempo
+								#'(lambda (node) (navigate-train-time (node-state node) *trains* *forbidden*)))))		; Operador por trenes y tiempo
 
 
 ;;
@@ -662,8 +662,8 @@
                                              lst-nodes-ex6
                                              *uniform-cost*))
 
-(mapcar #'(lambda (x) (node-state x)) sol-ex7) ; -> (PARIS AVIGNON NANCY TOULOUSE)
-(mapcar #'(lambda (x) (node-g x)) sol-ex7) ; -> (0 26 50 75)
+(mapcar #'(lambda (x) (node-state x)) sol-ex7) ; -> (PARIS NANCY TOULOUSE)
+(mapcar #'(lambda (x) (node-g x)) sol-ex7) ; -> (0 50 75)
 
 
 ;;
