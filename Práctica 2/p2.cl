@@ -254,29 +254,6 @@
 ;; BEGIN: Exercise 3 -- Goal test
 ;;
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Goal test
-;;
-;;  Returns T or NIl depending on whether a path leads to a final state
-;;
-;;  Input:
-;;    node:       node structure that contains, in the chain of parent-nodes,
-;;                a path starting at the initial state
-;;    destinations: list with the names of the destination cities
-;;    mandatory:  list with the names of the cities that is mandatoryu to visit
-;;
-;;  Returns
-;;    T: the path is a valid path to the final state
-;;    NIL: invalid path: either the final city is not a destination or some
-;;         of the mandatory cities are missing from the path.
-;;
-(defun f-goal-test (node destination mandatory) 
-	(if (member (node-state node) destination)
-		(mandatory-rec node mandatory)				 
-		nil))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; madatory-rec
@@ -302,6 +279,29 @@
 			(mandatory-rec (node-parent node) 
 						   (remove (node-state node) mandatory)))))     ; En otro caso, devuelve recursivamente la misma función con con nodo padre
 																		; y eliminando el nodo actual de mandatory
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Goal test
+;;
+;;  Returns T or NIl depending on whether a path leads to a final state
+;;
+;;  Input:
+;;    node:       node structure that contains, in the chain of parent-nodes,
+;;                a path starting at the initial state
+;;    destinations: list with the names of the destination cities
+;;    mandatory:  list with the names of the cities that is mandatoryu to visit
+;;
+;;  Returns
+;;    T: the path is a valid path to the final state
+;;    NIL: invalid path: either the final city is not a destination or some
+;;         of the mandatory cities are missing from the path.
+;;
+(defun f-goal-test (node destination mandatory) 
+	(if (member (node-state node) destination)
+		(mandatory-rec node mandatory)				 
+		nil))
+
+
 ;;
 ;; END: Exercise 3 -- Goal test
 ;;
@@ -312,28 +312,6 @@
 ;;
 ;; BEGIN: Exercise 4 -- Equal predicate for search states
 ;;
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; Determines if two nodes are equivalent with respect to the solution
-;; of the problem: two nodes are equivalent if they represent the same city 
-;, and if the path they contain includes the same mandatory cities.
-;;  Input:
-;;    node-1, node-1: the two nodes that we are comparing, each one
-;;                    defining a path through the parent links
-;;    mandatory:  list with the names of the cities that is mandatory to visit
-;;
-;;  Returns
-;;    T: the two ndoes are equivalent
-;;    NIL: The nodes are not equivalent
-;;
-(defun f-search-state-equal (node-1 node-2 &optional mandatory)
-	(if (eql (node-state node-1)									; Primero comparamos el estado de los nodos (el nombre de las ciudades)
-			   (node-state node-2))									; y si son iguales llamamos a la funcion mandatory-equal para comparar
-		(mandatory-equal (generate-mandatory node-1 mandatory) 		; las ciudades obligatorias que han visitado
-						 (generate-mandatory node-2 mandatory))
-		nil))														; Si no tienen el mismo nombre directamente devolvemos nil
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -375,6 +353,30 @@
 			(mandatory-equal (rest list1)						; En otro caso devuelve recursivamente la misma funcion con el resto de list1 y 
 							 (remove (first list1) list2)))))	; eliminando de list2 el primer elemento de list1  porque hemos comprobado que esta
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; Determines if two nodes are equivalent with respect to the solution
+;; of the problem: two nodes are equivalent if they represent the same city 
+;, and if the path they contain includes the same mandatory cities.
+;;  Input:
+;;    node-1, node-1: the two nodes that we are comparing, each one
+;;                    defining a path through the parent links
+;;    mandatory:  list with the names of the cities that is mandatory to visit
+;;
+;;  Returns
+;;    T: the two ndoes are equivalent
+;;    NIL: The nodes are not equivalent
+;;
+(defun f-search-state-equal (node-1 node-2 &optional mandatory)
+	(if (eql (node-state node-1)									; Primero comparamos el estado de los nodos (el nombre de las ciudades)
+			   (node-state node-2))									; y si son iguales llamamos a la funcion mandatory-equal para comparar
+		(mandatory-equal (generate-mandatory node-1 mandatory) 		; las ciudades obligatorias que han visitado
+						 (generate-mandatory node-2 mandatory))
+		nil))														; Si no tienen el mismo nombre directamente devolvemos nil
+
+
+
 (defparameter node-nevers
    (make-node :state 'Nevers) )
 (defparameter node-paris
@@ -385,6 +387,7 @@
    (make-node :state 'Reims :parent node-nancy))
 (defparameter node-calais
    (make-node :state 'Calais :parent node-reims))
+
 (defparameter node-calais-2
    (make-node :state 'Calais :parent node-paris))
 
@@ -463,30 +466,6 @@
 ;; using that action.
 ;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; 
-;;  Creates a list with all the nodes that can be reached from the
-;;  current one using all the operators in a given problem
-;;
-;;  Input:
-;;    node:   the node structure from which we start.
-;;    problem: the problem structure with the list of operators
-;;
-;;  Returns:
-;;    A list (node_1,...,node_n) of nodes that can be reached from the
-;;    given one
-;;
-(defun expand-node (node problem)
-	(let ((list1 (funcall (first (problem-operators problem)) node))				; List1 es la lista  de acciones generada por el primer operador del problema,
-		 (list2 (funcall (second (problem-operators problem)) node)))			; mientras que list2 es la generada por el segundo operador
-
-	(if (null list1)													; Si la primera lista es null y la segunda también, se devuelve nil
-		(if (null list2) 
-			nil
-			(create-node-list list2 node problem))									; Si la segunda no es nil, se crea la lista de nodos a raiz de list2
-		(if (null list2)												; Si la primera lita no es null, y la segunda si , se crea la lista de nodos a raiz 
-			(create-node-list list1 node problem)										; de list1
-			(create-node-list (append list1 list2) node problem)))))						; Si ambas no son nil, se crea la lista de nodos a raiz de la unión de list1 y list2
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -520,6 +499,34 @@
 						   (funcall (problem-f-h problem) 
 							       (action-final action))))
 				(create-node-list (rest actions) node problem))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;;  Creates a list with all the nodes that can be reached from the
+;;  current one using all the operators in a given problem
+;;
+;;  Input:
+;;    node:   the node structure from which we start.
+;;    problem: the problem structure with the list of operators
+;;
+;;  Returns:
+;;    A list (node_1,...,node_n) of nodes that can be reached from the
+;;    given one
+;;
+(defun expand-node (node problem)
+	(let ((list1 (funcall (first (problem-operators problem)) node))				; List1 es la lista  de acciones generada por el primer operador del problema,
+		 (list2 (funcall (second (problem-operators problem)) node)))			; mientras que list2 es la generada por el segundo operador
+
+	(if (null list1)													; Si la primera lista es null y la segunda también, se devuelve nil
+		(if (null list2) 
+			nil
+			(create-node-list list2 node problem))									; Si la segunda no es nil, se crea la lista de nodos a raiz de list2
+		(if (null list2)												; Si la primera lita no es null, y la segunda si , se crea la lista de nodos a raiz 
+			(create-node-list list1 node problem)										; de list1
+			(create-node-list (append list1 list2) node problem)))))						; Si ambas no son nil, se crea la lista de nodos a raiz de la unión de list1 y list2
+
+
 				
 
 (defparameter node-marseille-ex6
@@ -527,6 +534,7 @@
 
 (defparameter lst-nodes-ex6
   (expand-node node-marseille-ex6 *travel-fast*))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;
 ;;;  BEGIN Exercise 7 -- Node list management
@@ -583,10 +591,8 @@
 				(insert-node node 									; y llamamos a la función sobre el reto de la lista
 						  (append left (list (first right)))
 						  (rest right) node-compare-p)
-				(append left (list node) right))))						; Si node va antes, juntamos left con el nodo y con rigt, resultando la lista ordenada
+				(append left (list node) right))))						; Si node va antes, juntamos left con el nodo y con right, resultando la lista ordenada
 		
-
-(insert-node 11 '() '(3 6 8 10 13) #'<) ; -> (3 6 8 10 11 13)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Inserts a list of nodes in an ordered list keeping the result list
@@ -606,14 +612,14 @@
 ;;   criterion node-compare-p.
 ;; 
 (defun insert-nodes (nodes lst-nodes node-compare-p)
-	(if (null nodes)
+	(if (null nodes)													; Si la lista es null, la devuelve
 		lst-nodes
-		(insert-nodes (rest nodes) 
+		(insert-nodes (rest nodes) 										; En otro caso, mete el primer nodo y sigue
 				    (insert-node (first nodes) 
 							  '() lst-nodes node-compare-p)
 				    node-compare-p)))
 
- (insert-nodes '(4 7 3 11 15) '(1 5 10 13) #'<) ;-> (1 3 4 5 7 10 11 13 15)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; Inserts a list of nodes in an ordered list keeping the result list
@@ -641,30 +647,6 @@
 (defun insert-nodes-strategy (nodes lst-nodes strategy)
 	(insert-nodes nodes lst-nodes (strategy-node-compare-p strategy)))
   
-
-(defun node-g-<= (node-1 node-2)
-  (<= (node-g node-1)
-      (node-g node-2)))
-
-(defparameter *uniform-cost*
-  (make-strategy
-   :name 'uniform-cost
-   :node-compare-p #'node-g-<=))
-
-(defparameter node-paris-ex7
-  (make-node :state 'Paris :depth 0 :g 0 :f 0) )
-
-(defparameter node-nancy-ex7
-  (make-node :state 'Nancy :depth 2 :g 50 :f 50) )
-
-
-(defparameter sol-ex7 (insert-nodes-strategy (list node-paris-ex7 node-nancy-ex7) 
-                                             lst-nodes-ex6
-                                             *uniform-cost*))
-
-(mapcar #'(lambda (x) (node-state x)) sol-ex7) ; -> (PARIS NANCY TOULOUSE)
-(mapcar #'(lambda (x) (node-g x)) sol-ex7) ; -> (0 50 75)
-
 
 ;;
 ;;    END: Exercize 7 -- Node list management
@@ -831,8 +813,8 @@
 	(graph-search problem *A-star*))
   
 
-
-(a-star-search *travel-fast*) ;->
+(solution-path (a-star-search *travel-cheap*)) 
+(solution-path (a-star-search *travel-fast*)) ;->
 ;;
 ;; END: Exercise 9 -- Search algorithm
 ;;
@@ -844,23 +826,6 @@
 ;;;    BEGIN Exercise 10: Solution path
 ;;;
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;;  Solution-path
-;;
-;;  Input:
-;;    node : returned node by a problem algorithm (ie a-star)
-;;
-;;    Returns:
-;;     nil if the node is an empty node (ie there ir no path)
-;;     In other case it returns the list of states or names of the cities 
-;;        that have been visited in the path
-;;
-
-(defun solution-path (node)
-    (unless (null node)												; Si le pasamos una lista vacía devuelve nil
-        (solution-path-recursive '() node)))						; Sino llama a la funcion recursiva que calcula el camino
- 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;;  Solution-path-recursive
@@ -882,21 +847,23 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;;  Action-sequence
+;;  Solution-path
 ;;
 ;;  Input:
 ;;    node : returned node by a problem algorithm (ie a-star)
 ;;
 ;;    Returns:
 ;;     nil if the node is an empty node (ie there ir no path)
-;;     In other case it returns the list of actions that have been made 
-;; 		  in the algorithm
+;;     In other case it returns the list of states or names of the cities 
+;;        that have been visited in the path
 ;;
 
-(defun action-sequence (node)
-    (unless (null node)												; Si el nodo es nil significa que no hay solucion
-        (action-sequence-recursive '() node)))						; Sino devolvemos la funcion recursiva pasando una lista de acciones
-																	; vacias y el nodo actual
+(defun solution-path (node)
+    (unless (null node)												; Si le pasamos una lista vacía devuelve nil
+        (solution-path-recursive '() node)))						; Sino llama a la funcion recursiva que calcula el camino
+ 
+
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -916,6 +883,25 @@
          (cons (node-action node) lista)							; luego solo devolvemos la lista añadiendo el nodo padre
          (action-sequence-recursive (cons (node-action node) lista) ; Sino devolvemos recursivamente la funcion añadiendo a la lista el
                                     (node-parent node))))			; nodo actual y con el nodo padre del actual hasta encontrar el nodo padre
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;  Action-sequence
+;;
+;;  Input:
+;;    node : returned node by a problem algorithm (ie a-star)
+;;
+;;    Returns:
+;;     nil if the node is an empty node (ie there ir no path)
+;;     In other case it returns the list of actions that have been made 
+;; 		  in the algorithm
+;;
+
+(defun action-sequence (node)
+    (unless (null node)												; Si el nodo es nil significa que no hay solucion
+        (action-sequence-recursive '() node)))						; Sino devolvemos la funcion recursiva pasando una lista de acciones
+																	; vacias y el nodo actual
 
 
 
@@ -940,16 +926,15 @@
 ;;;
 
 (defun breadth-first-node-compare-p (node-1 node-2)
-	nil)
+	t)
 
 (defparameter *breadth-first*
 	(make-strategy
 	:name 'breadth-first
 	:node-compare-p #'breadth-first-node-compare-p))
 
-(solution-path (graph-search *travel-cheap* *breadth-first*))
-;; -> (MARSEILLE TOULOUSE LYON ROENNE NEVERS LIMOGES ORLEANS NANTES BREST ST-MALO
-;;               PARIS ST-MALO BREST NANTES TOULOUSE LYON NANCY REIMS CALAIS)
+(solution-path (graph-search *travel-fast* *breadth-first*))
+;; -> (MARSEILLE TOULOUSE NANTES ST-MALO PARIS CALAIS)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; 
@@ -963,7 +948,7 @@
 ;;;    van al final de la cola
 
 (defun depth-first-node-compare-p (node-1 node-2)
-	t)
+	nil)
 
 (defparameter *depth-first*
 	(make-strategy
@@ -972,7 +957,8 @@
 
 
 (solution-path (graph-search *travel-fast* *depth-first*))
-;; -> (MARSEILLE TOULOUSE NANTES ST-MALO PARIS CALAIS) 
+;; ->  (MARSEILLE TOULOUSE LYON ROENNE NEVERS LIMOGES ORLEANS NANTES BREST ST-MALO
+;;               PARIS ST-MALO BREST NANTES TOULOUSE LYON NANCY REIMS CALAIS)
 
 ;;;
 ;;; 
