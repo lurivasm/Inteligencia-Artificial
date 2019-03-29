@@ -1,0 +1,29 @@
+<div class="notebook">
+
+<div class="nb-cell program" name="p1">
+%% Ejercicio 1
+% Duplica
+% Recibe dos listas, y es true si los elementos de la primera 
+% estan en la segunda duplicados
+duplica([],[]).
+duplica([X|L],[X, X|L1]) :- duplica(L, L1).
+
+%% Ejercicio 2
+% Invierte
+% Recibe dos listas y se satisface cuando la segunda contiene los
+% elementos de la primera en orden inverso
+% Hacemos uso del predicado concatena
+concatena([], L, L).
+concatena([X|L1], L2, [X|L3]) :- concatena(L1, L2, L3).
+
+quitaultimo([X],[]) :- !.
+quitaultimo([X|L], [X|L1]) :- quitaultimo(L, L1).
+
+invierte([X], [X]) :- !.
+invierte([X|L1], L2) :- last(L2,X), quitaultimo(L2,L3) ,invierte(L1,L3).
+
+    
+
+</div>
+
+</div>
