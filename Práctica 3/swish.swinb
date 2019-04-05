@@ -16,13 +16,49 @@ duplica([X|L],[X, X|L1]) :- duplica(L, L1).
 concatena([], L, L).
 concatena([X|L1], L2, [X|L3]) :- concatena(L1, L2, L3).
 
-quitaultimo([X],[]) :- !.
-quitaultimo([X|L], [X|L1]) :- quitaultimo(L, L1).
+invierte([], []).
+invierte([H|T], L) :- invierte(T, R), concatena(R, [H], L).
 
-invierte([X], [X]) :- !.
-invierte([X|L1], L2) :- last(L2,X), quitaultimo(L2,L3) ,invierte(L1,L3).
+%% Ejercicio 3
+% Palíndromo
+% Recibe una lista y se satisface cuando es un palindromo, es
+% decir, se lee de la misma manera de izquierda a derecha que
+% de derecha a izquierda
+palindromo(L) :- invierte(L, L).
 
-    
+%% Ejercicio 4
+% Divide
+%  Recibe 4 argumentos:
+%  		L : una lista de elementos
+%  		N : un numero
+%  		L1 : lista que debe contener los N primeros elem de L
+%  		L2 : lista que contiene el resto de elem de L
+% Se satisface cuando la lista L1 contiene los primeros N 
+% elementos de L y L2 contiene el resto.
+divide(L, N, L1, L2) :- length(L1, N), concatena(L1, L2, L).
+
+%% Ejercicio 5
+% Aplasta
+% Recibe dos listas y se satisface cuando la segunda lista es 
+% una versión aplastada de la primera
+aplasta([], []) :- !.
+aplasta([T|H], L1) :- is_list(T), aplasta(T, L2), 
+    				  aplasta(H, L3), concatena(L2, L3, L1).
+aplasta([T|H], [T|L]) :- \+ is_list(T), aplasta(H, L). 
+                    
+%% Ejercicio 6
+% Primos
+% Recibe un número N y una lista L
+% Se satisface cuando L contiene los factores primos de N
+next_factor(_, 2, 3) :- !.
+next_factor(N, F, NF) :-  F < N, NF is F + 2.
+
+divisores(N, L, F) :- es_primo(F), 0 is mod(N, F),
+                      concatena(F, L, L1), next_factor().
+primos(N, L).
+
+%% Ejercicio 7
+% 
 
 </div>
 
