@@ -1,13 +1,14 @@
-<div class="notebook">
-
-<div class="nb-cell program" name="p1">
-%% Ejercicio 1
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Ejercicio 1
 % Duplica
 % Recibe dos listas, y es true si los elementos de la primera 
 % estan en la segunda duplicados
 duplica([],[]).
 duplica([X|L],[X, X|L1]) :- duplica(L, L1).
 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Ejercicio 2
 % Invierte
 % Recibe dos listas y se satisface cuando la segunda contiene los
@@ -19,6 +20,8 @@ concatena([X|L1], L2, [X|L3]) :- concatena(L1, L2, L3).
 invierte([], []).
 invierte([H|T], L) :- invierte(T, R), concatena(R, [H], L).
 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Ejercicio 3
 % Palíndromo
 % Recibe una lista y se satisface cuando es un palindromo, es
@@ -26,6 +29,8 @@ invierte([H|T], L) :- invierte(T, R), concatena(R, [H], L).
 % de derecha a izquierda
 palindromo(L) :- invierte(L, L).
 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Ejercicio 4
 % Divide
 %  Recibe 4 argumentos:
@@ -37,6 +42,8 @@ palindromo(L) :- invierte(L, L).
 % elementos de L y L2 contiene el resto.
 divide(L, N, L1, L2) :- length(L1, N), concatena(L1, L2, L).
 
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Ejercicio 5
 % Aplasta
 % Recibe dos listas y se satisface cuando la segunda lista es 
@@ -44,8 +51,10 @@ divide(L, N, L1, L2) :- length(L1, N), concatena(L1, L2, L).
 aplasta([], []) :- !.
 aplasta([T|H], L1) :- is_list(T), aplasta(T, L2), 
     				  aplasta(H, L3), concatena(L2, L3, L1).
+
 aplasta([T|H], [T|L]) :- \+ is_list(T), aplasta(H, L). 
-                    
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Ejercicio 6
 % Primos
 % Recibe un número N y una lista L
@@ -53,13 +62,46 @@ aplasta([T|H], [T|L]) :- \+ is_list(T), aplasta(H, L).
 next_factor(_, 2, 3) :- !.
 next_factor(N, F, NF) :-  F < N, NF is F + 2.
 
-divisores(N, L, F) :- es_primo(F), 0 is mod(N, F),
-                      concatena(F, L, L1), next_factor().
-primos(N, L).
+divisores(N, _, N) :- !.
 
-%% Ejercicio 7
-% 
+% Si F es divisor de N, lo mete en L, y calcula los divisores
+% de N/F
+divisores(N, L, F) :- 0 is mod(N, F), concatena(L, [F], L1),
+    				  N2 is N/F, divisores(N2, L, F).
 
-</div>
+% Si F no es divisor de N, calcula el siguiente factor despues 
+% de F (NF) y mira si es divisor de N
+divisores(N, L, F) :- \+ 0 is mod(N, F), next_factor(N, F, NF),
+    				  divisores(N, L, NF).
 
-</div>
+primos(N, L) :- divisores(N, L, 2). 
+
+
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Ejercicio 7.1
+% cod_primero(X, L, Lrem, Lfront)
+% Recibe 
+
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Ejercicio 8
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
