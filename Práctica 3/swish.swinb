@@ -1,4 +1,3 @@
- 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Ejercicio 1
 % Duplica
@@ -62,11 +61,11 @@ aplasta([T|H], [T|L]) :- \+ is_list(T), aplasta(H, L).
 next_factor(_, 2, 3) :- !.
 next_factor(N, F, NF) :-  F < N, NF is F + 2.
 
-divisores(N, _, N) :- !.
+divisores(1, [], _) :- !.
 
 % Si F es divisor de N, lo mete en L, y calcula los divisores
 % de N/F
-divisores(N, L, F) :- 0 is mod(N, F), concatena(L, [F], L1),
+divisores(N, [F|L], F) :- 0 is mod(N, F),
     				  N2 is N/F, divisores(N2, L, F).
 
 % Si F no es divisor de N, calcula el siguiente factor despues 
@@ -83,25 +82,35 @@ primos(N, L) :- divisores(N, L, 2).
 % cod_primero(X, L, Lrem, Lfront)
 % Recibe 
 
+cod_primero(X, [], [],[X]).
+
+cod_primero(X, [P|F], Lrem, [T|Lfront]) :- X == P,T is P,
+    									cod_primero(X, F, Lrem, Lfront).
+cod_primero(X, [P|F], Lrem, [T]) :- \+ X == P , Lrem = [P|F], T is X.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Ejercicio 7.1
+% cod_all(L, L1)
+% Recibe 
+% 
+cod_all([],[]).
+cod_all([P|L],[T|L1]) :- cod_primero(P, L, Lrem, Lfront), T = Lfront, cod_all(Lrem, L1).
+
+
+
+
+
+
+
+
+
+
+
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Ejercicio 8
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+% cod_
+% 
+% 
