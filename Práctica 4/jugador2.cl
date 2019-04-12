@@ -1,10 +1,10 @@
-(defpackage :2301_P01_c4cca ; se declara un paquete con el grupo, la pareja y el código
-	(:use :common-lisp :conecta4) ; el paquete usa common-lisp y conecta4
-	(:export :heuristica :*alias*)) ; exporta la función de evaluación y un alias
+(defpackage :2301_P01_c4cca 
+	(:use :common-lisp :conecta4) 
+	(:export :heuristica :*alias*))
 
 (in-package 2301_P01_c4cca)
 
-(defvar *alias* "¿Quien es Homer?") ; alias que aparece en el ranking
+(defvar *alias* '|Quien es Homer|) 
 
 (defun heuristica (estado) 
 	(let (lst (buscar-ficha (estado 0 0)))

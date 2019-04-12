@@ -1,10 +1,10 @@
-(defpackage :2301_P01_f413c ; se declara un paquete con el grupo, la pareja y el código
-	(:use :common-lisp :conecta4) ; el paquete usa common-lisp y conecta4
-	(:export :heuristica :*alias*)) ; exporta la función de evaluación y un alias
+(defpackage :2301_P01_f413c 
+	(:use :common-lisp :conecta4) 
+	(:export :heuristica :*alias*)) 
 
 (in-package 2301_P01_f413c)
 
-(defvar *alias* "Yo me llamo tipo de incógnito") ; alias que aparece en el ranking
+(defvar *alias* '|Yo me llamo tipo de incognito|) 
 
 (defun heuristica (estado) 
 	(first (sort (lista-fichas estado)  #'<)))
