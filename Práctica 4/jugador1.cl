@@ -4,7 +4,7 @@
 
 (in-package 2301_P01_618b6)
 
-(defvar *alias* '|Homer|) ; alias que aparece en el ranking
+(defvar *alias* '|Homer|)
 
 (defun heuristica (estado) 
 	(tam (columnas-jugables (estado-tablero estado)) 0)) 

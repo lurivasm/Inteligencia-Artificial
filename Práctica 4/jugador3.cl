@@ -4,7 +4,7 @@
 
 (in-package 2301_P01_f413c)
 
-(defvar *alias* '|Yo me llamo tipo de incognito|) 
+(defvar *alias* '|Yo_me_llamo_tipo_de_incognito|) 
 
 (defun heuristica (estado) 
 	(first (sort (lista-fichas estado)  #'<)))

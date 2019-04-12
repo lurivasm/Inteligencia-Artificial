@@ -4,7 +4,7 @@
 
 (in-package 2301_P01_c4cca)
 
-(defvar *alias* '|Quien es Homer|) 
+(defvar *alias* '|Quien_es_Homer|) 
 
 (defun heuristica (estado) 
 	(let (lst (buscar-ficha (estado 0 0)))
