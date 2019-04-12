@@ -75,6 +75,50 @@
 			       ((= abajo-izq 3) 1000))))))
 	(- puntuacion-actual puntuacion-oponente)))))
 
+
+
+
+
+
+(defun buscar-ficha (estado columna fila)
+		(cond
+			((eql columna 8)
+				(buscar-ficha estado 0 (+ 1 fila)))
+			((eql (obtener-ficha (estado-tablero estado) columna fila) 
+			 (estado-turno estado))
+				 (list columna fila))
+			(t (buscar-ficha estado (+ 1 columna) fila))))
+
+(defun heuristica2 (estado) 
+	(let ((lst (buscar-ficha estado 0 0)))
+		(- 4 (contar-arriba-derecha (estado-tablero estado) (estado-turno estado)
+									(first lst)(second lst)))))
+
+
+
+
+(defun lista-fichas (estado)
+	(let ((lst (buscar-ficha estado 0 0)))
+			(list 
+				(- 4 (contar-abajo (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-arriba (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-derecha (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-izquierda (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-abajo-derecha (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-abajo-izquierda (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-arriba-derecha (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst)))
+				(- 4 (contar-arriba-izquierda (estado-tablero estado) (estado-turno estado)
+										(first lst) (second lst))))))
+				
+(defun heuristica3 (estado) 
+	(first (sort (lista-fichas estado)  #'<)))
 ;; -------------------------------------------------------------------------------
 ;; Jugadores 
 ;; -------------------------------------------------------------------------------
@@ -91,6 +135,13 @@
 				       :f-jugador #'f-jugador-humano
 				       :f-eval  #'f-no-eval))
 
+(defvar *jugador2* (make-jugador :nombre 'Jugador-humano
+				       :f-jugador #'f-jugador-negamax
+				       :f-eval  #'heuristica2))
+
+(defvar *jugador3* (make-jugador :nombre 'Jugador-humano
+				       :f-jugador #'f-jugador-negamax
+				       :f-eval  #'heuristica3))
 ;; -------------------------------------------------------------------------------
 ;; Algunas partidas de ejemplo:
 ;; -------------------------------------------------------------------------------
@@ -103,7 +154,8 @@
 ;(print (partida *jugador-bueno* *jugador-bueno* 4))
 ;(print (partida *jugador-humano* *jugador-humano*))
 ;(print (partida *jugador-humano* *jugador-aleatorio* 4))
-(print (partida *jugador-humano* *jugador-bueno* 4))
+;(print (partida *jugador-humano* *jugador-bueno* 4))
 ;(print (partida *jugador-aleatorio* *jugador-humano*))
-
+;(print (partida *jugador2* *jugador-bueno* 4))
+(print (partida *jugador3* *jugador-bueno* 4))
 ;;
